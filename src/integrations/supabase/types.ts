@@ -14,7 +14,284 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      machines: {
+        Row: {
+          action_required: boolean | null
+          brand: string | null
+          created_at: string
+          current_hours: number | null
+          id: string
+          last_greasing_hours: number | null
+          last_preop_date: string | null
+          last_preop_id: string | null
+          location: string | null
+          model: string | null
+          name: string
+          next_certification_date: string | null
+          next_preventive_hours: number | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          action_required?: boolean | null
+          brand?: string | null
+          created_at?: string
+          current_hours?: number | null
+          id?: string
+          last_greasing_hours?: number | null
+          last_preop_date?: string | null
+          last_preop_id?: string | null
+          location?: string | null
+          model?: string | null
+          name: string
+          next_certification_date?: string | null
+          next_preventive_hours?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action_required?: boolean | null
+          brand?: string | null
+          created_at?: string
+          current_hours?: number | null
+          id?: string
+          last_greasing_hours?: number | null
+          last_preop_date?: string | null
+          last_preop_id?: string | null
+          location?: string | null
+          model?: string | null
+          name?: string
+          next_certification_date?: string | null
+          next_preventive_hours?: number | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      preoperational: {
+        Row: {
+          checklist: Json | null
+          coolant_level: string | null
+          created_at: string
+          datetime: string
+          fuel_level: string | null
+          greased: boolean | null
+          horometer_final: number | null
+          horometer_initial: number | null
+          hoses_note: string | null
+          hoses_status: string | null
+          hours_worked: number | null
+          hydraulic_level: string | null
+          id: string
+          lights_note: string | null
+          lights_status: string | null
+          machine_id: string
+          observations: string | null
+          oil_level: string | null
+          project_id: string
+          sync_status: string | null
+          tires_action: string | null
+          tires_bearing_issue: boolean | null
+          tires_punctured: boolean | null
+          tires_wear: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checklist?: Json | null
+          coolant_level?: string | null
+          created_at?: string
+          datetime?: string
+          fuel_level?: string | null
+          greased?: boolean | null
+          horometer_final?: number | null
+          horometer_initial?: number | null
+          hoses_note?: string | null
+          hoses_status?: string | null
+          hours_worked?: number | null
+          hydraulic_level?: string | null
+          id?: string
+          lights_note?: string | null
+          lights_status?: string | null
+          machine_id: string
+          observations?: string | null
+          oil_level?: string | null
+          project_id: string
+          sync_status?: string | null
+          tires_action?: string | null
+          tires_bearing_issue?: boolean | null
+          tires_punctured?: boolean | null
+          tires_wear?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checklist?: Json | null
+          coolant_level?: string | null
+          created_at?: string
+          datetime?: string
+          fuel_level?: string | null
+          greased?: boolean | null
+          horometer_final?: number | null
+          horometer_initial?: number | null
+          hoses_note?: string | null
+          hoses_status?: string | null
+          hours_worked?: number | null
+          hydraulic_level?: string | null
+          id?: string
+          lights_note?: string | null
+          lights_status?: string | null
+          machine_id?: string
+          observations?: string | null
+          oil_level?: string | null
+          project_id?: string
+          sync_status?: string | null
+          tires_action?: string | null
+          tires_bearing_issue?: boolean | null
+          tires_punctured?: boolean | null
+          tires_wear?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      preoperational_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          photo_type: string
+          preoperational_id: string
+          url: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_type: string
+          preoperational_id: string
+          url: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          photo_type?: string
+          preoperational_id?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preoperational_photos_preoperational_id_fkey"
+            columns: ["preoperational_id"]
+            isOneToOne: false
+            referencedRelation: "preoperational"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      project_machines: {
+        Row: {
+          assigned_date: string | null
+          id: string
+          machine_id: string
+          project_id: string
+        }
+        Insert: {
+          assigned_date?: string | null
+          id?: string
+          machine_id: string
+          project_id: string
+        }
+        Update: {
+          assigned_date?: string | null
+          id?: string
+          machine_id?: string
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_machines_machine_id_fkey"
+            columns: ["machine_id"]
+            isOneToOne: false
+            referencedRelation: "machines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_machines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          location: string | null
+          name: string
+          start_date: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
