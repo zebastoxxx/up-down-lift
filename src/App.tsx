@@ -14,6 +14,7 @@ import Reports from "./pages/Reports";
 import Search from "./pages/Search";
 import Alerts from "./pages/Alerts";
 import Settings from "./pages/Settings";
+import Preoperational from "./pages/Preoperational";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/preoperational" element={<Preoperational />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

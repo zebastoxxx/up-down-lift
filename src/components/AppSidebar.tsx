@@ -27,18 +27,19 @@ import {
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: BarChart3 },
-  { title: "Machines", url: "/machines", icon: Truck },
-  { title: "Clients", url: "/clients", icon: Users },
-  { title: "Projects", url: "/projects", icon: FolderOpen },
-  { title: "Inspections", url: "/inspections", icon: ClipboardCheck },
-  { title: "Work Orders", url: "/work-orders", icon: Wrench },
-  { title: "Reports", url: "/reports", icon: FileText },
+  { title: "Máquinas", url: "/machines", icon: Truck },
+  { title: "Preoperacional", url: "/preoperational", icon: ClipboardCheck },
+  { title: "Clientes", url: "/clients", icon: Users },
+  { title: "Proyectos", url: "/projects", icon: FolderOpen },
+  { title: "Inspecciones", url: "/inspections", icon: ClipboardCheck },
+  { title: "Órdenes de Trabajo", url: "/work-orders", icon: Wrench },
+  { title: "Reportes", url: "/reports", icon: FileText },
 ];
 
 const quickActions = [
-  { title: "Search", url: "/search", icon: Search },
-  { title: "Alerts", url: "/alerts", icon: AlertTriangle },
-  { title: "Settings", url: "/settings", icon: Settings },
+  { title: "Búsqueda", url: "/search", icon: Search },
+  { title: "Alertas", url: "/alerts", icon: AlertTriangle },
+  { title: "Configuración", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -58,7 +59,7 @@ export function AppSidebar() {
         {/* Main Navigation */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground font-medium">
-            Main Menu
+            Menú Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -79,7 +80,7 @@ export function AppSidebar() {
         {/* Quick Actions */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground font-medium">
-            Quick Actions
+            Acciones Rápidas
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
