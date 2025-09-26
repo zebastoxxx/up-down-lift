@@ -1,156 +1,106 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
-import { Loader2 } from 'lucide-react';
 
+// Validation schema
 const authSchema = z.object({
-  email: z.string().email('Email inválido').max(255, 'Email muy largo'),
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').max(100, 'Contraseña muy larga'),
-  fullName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100, 'Nombre muy largo').optional()
+  username: z.string().min(3, 'El usuario debe tener al menos 3 caracteres'),
+  password: z.string().min(3, 'La contraseña debe tener al menos 3 caracteres'),
 });
 
 export default function Auth() {
-  const { signIn, signUp, user, loading } = useAuth();
-  const { toast } = useToast();
+  const { user, signIn, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
-    fullName: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!loading && user) {
-      navigate('/');
+    if (user && !authLoading) {
+      navigate('/', { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [user, authLoading, navigate]);
 
-  const validateForm = (isSignUp: boolean = false) => {
+  const validateForm = (data: typeof formData) => {
     try {
-      const dataToValidate = isSignUp 
-        ? formData 
-        : { email: formData.email, password: formData.password };
-      
-      authSchema.parse(dataToValidate);
-      setErrors({});
-      return true;
+      authSchema.parse(data);
+      return { success: true, issues: [] };
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.issues.forEach((err) => {
-          if (err.path.length > 0) {
-            newErrors[err.path[0] as string] = err.message;
-          }
-        });
-        setErrors(newErrors);
+        return { success: false, issues: error.issues };
       }
-      return false;
+      return { success: false, issues: [] };
     }
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm(false)) return;
-
     setIsSubmitting(true);
+    setErrors({});
+
+    const validation = validateForm(formData);
+    if (!validation.success) {
+      const newErrors: Record<string, string> = {};
+      validation.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          newErrors[issue.path[0] as string] = issue.message;
+        }
+      });
+      setErrors(newErrors);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const { error } = await signIn(formData.email.trim(), formData.password);
+      const { error } = await signIn(formData.username, formData.password);
       
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Error de autenticación',
-            description: 'Email o contraseña incorrectos',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Error',
-            description: error.message,
-            variant: 'destructive',
-          });
-        }
+        toast({
+          title: "Error de autenticación",
+          description: error || "Credenciales inválidas",
+          variant: "destructive",
+        });
       } else {
         toast({
-          title: 'Bienvenido',
-          description: 'Has iniciado sesión correctamente',
+          title: "¡Bienvenido!",
+          description: "Has iniciado sesión correctamente",
         });
+        navigate('/', { replace: true });
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Ocurrió un error inesperado',
-        variant: 'destructive',
+        title: "Error",
+        description: "Ha ocurrido un error inesperado",
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm(true)) return;
-
-    setIsSubmitting(true);
-    try {
-      const { error } = await signUp(
-        formData.email.trim(), 
-        formData.password, 
-        formData.fullName.trim()
-      );
-      
-      if (error) {
-        if (error.message.includes('User already registered')) {
-          toast({
-            title: 'Usuario ya existe',
-            description: 'Este email ya está registrado. Intenta iniciar sesión.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Error',
-            description: error.message,
-            variant: 'destructive',
-          });
-        }
-      } else {
-        toast({
-          title: 'Cuenta creada',
-          description: 'Tu cuenta ha sido creada correctamente. Puedes iniciar sesión.',
-        });
-        // Reset form
-        setFormData({ email: '', password: '', fullName: '' });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Ocurrió un error inesperado',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
-
-  if (loading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -159,125 +109,68 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Maquinaria y Construcción</CardTitle>
           <CardDescription>
-            Accede a tu cuenta para gestionar proyectos y equipos
+            Sistema de gestión de maquinaria pesada
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Iniciar Sesión</TabsTrigger>
-              <TabsTrigger value="signup">Registrarse</TabsTrigger>
-            </TabsList>
+          <form onSubmit={handleSignIn} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Usuario</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="Ingresa tu usuario"
+                value={formData.username}
+                onChange={handleInputChange}
+                className={errors.username ? 'border-destructive' : ''}
+              />
+              {errors.username && (
+                <p className="text-sm text-destructive">{errors.username}</p>
+              )}
+            </div>
             
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="tu@empresa.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={errors.email ? 'border-destructive' : ''}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Contraseña</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={errors.password ? 'border-destructive' : ''}
-                  />
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Iniciar Sesión
-                </Button>
-              </form>
-            </TabsContent>
+            <div className="space-y-2">
+              <Label htmlFor="password">Contraseña</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleInputChange}
+                className={errors.password ? 'border-destructive' : ''}
+              />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
+            </div>
             
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Nombre Completo</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Juan Pérez"
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    className={errors.fullName ? 'border-destructive' : ''}
-                  />
-                  {errors.fullName && (
-                    <p className="text-sm text-destructive">{errors.fullName}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="tu@empresa.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={errors.email ? 'border-destructive' : ''}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Contraseña</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
-                    className={errors.password ? 'border-destructive' : ''}
-                  />
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Mínimo 6 caracteres
-                  </p>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full" 
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Crear Cuenta
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Iniciando sesión...
+                </>
+              ) : (
+                'Iniciar Sesión'
+              )}
+            </Button>
+            
+            <div className="text-center text-sm text-muted-foreground mt-4">
+              <p>Usuario: admin</p>
+              <p>Contraseña: admin123</p>
+            </div>
+          </form>
         </CardContent>
       </Card>
     </div>
