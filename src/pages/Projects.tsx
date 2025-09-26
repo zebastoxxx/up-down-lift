@@ -1,25 +1,14 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  Plus, 
-  Eye, 
-  Settings,
-  MapPin,
-  Calendar,
-  DollarSign,
-  Users,
-  Truck,
-  Building
-} from "lucide-react";
+import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { Search, Plus, Filter, Download, Building } from "lucide-react";
 import { ProjectForm } from "@/components/projects/ProjectForm";
+import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "@/hooks/use-toast";
 
 interface Project {
   id: string;
@@ -38,33 +27,15 @@ interface Project {
 
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   useEffect(() => {
     fetchProjects();
   }, []);
-
-  useEffect(() => {
-    let filtered = projects;
-    
-    if (searchTerm) {
-      filtered = filtered.filter(project =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.location?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(project => project.status === statusFilter);
-    }
-    
-    setFilteredProjects(filtered);
-  }, [projects, searchTerm, statusFilter]);
 
   const fetchProjects = async () => {
     try {
@@ -91,8 +62,67 @@ export default function Projects() {
       setProjects(transformedProjects);
     } catch (error) {
       console.error('Error fetching projects:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los proyectos",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (project: Project) => {
+    setSelectedProject(project);
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (project: Project) => {
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', project.id);
+
+      if (error) throw error;
+      
+      setProjects(prev => prev.filter(p => p.id !== project.id));
+      toast({
+        title: "Éxito",
+        description: "Proyecto eliminado correctamente"
+      });
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el proyecto",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkDelete = async (selectedProjects: Project[]) => {
+    try {
+      const ids = selectedProjects.map(p => p.id);
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .in('id', ids);
+
+      if (error) throw error;
+      
+      setProjects(prev => prev.filter(p => !ids.includes(p.id)));
+      toast({
+        title: "Éxito",
+        description: `${selectedProjects.length} proyectos eliminados correctamente`
+      });
+    } catch (error) {
+      console.error('Error bulk deleting projects:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron eliminar los proyectos seleccionados",
+        variant: "destructive"
+      });
     }
   };
 
@@ -101,9 +131,101 @@ export default function Projects() {
     return acc;
   }, {} as Record<string, number>);
 
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.location?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   const handleProjectCreated = () => {
-    fetchProjects(); // Refresh the projects list
+    fetchProjects();
+    setIsFormOpen(false);
+    setSelectedProject(null);
   };
+
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      'activo': { label: 'Activo', variant: 'default' as const },
+      'completado': { label: 'Completado', variant: 'secondary' as const },
+      'planificacion': { label: 'Planificación', variant: 'outline' as const },
+      'pausado': { label: 'Pausado', variant: 'destructive' as const }
+    };
+    
+    const config = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'outline' as const };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const columns: ColumnDef<Project>[] = [
+    {
+      accessorKey: "name",
+      header: createSortableHeader("Nombre"),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Building className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{row.getValue("name")}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "client_name",
+      header: "Cliente",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("client_name") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Estado",
+      cell: ({ row }) => getStatusBadge(row.getValue("status")),
+    },
+    {
+      accessorKey: "city",
+      header: "Ciudad",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("city") || row.original.location || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "start_date",
+      header: createSortableHeader("Fecha Inicio"),
+      cell: ({ row }) => {
+        const date = row.getValue("start_date") as string;
+        return (
+          <div className="text-sm">
+            {date ? new Date(date).toLocaleDateString('es-ES') : "-"}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "end_date",
+      header: createSortableHeader("Fecha Fin"),
+      cell: ({ row }) => {
+        const date = row.getValue("end_date") as string;
+        return (
+          <div className="text-sm">
+            {date ? new Date(date).toLocaleDateString('es-ES') : "-"}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: createSortableHeader("Fecha Registro"),
+      cell: ({ row }) => {
+        const date = row.getValue("created_at") as string;
+        return (
+          <div className="text-sm">
+            {new Date(date).toLocaleDateString('es-ES')}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
@@ -120,14 +242,14 @@ export default function Projects() {
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
-          <Button className="bg-yellow-500 hover:bg-yellow-600 text-black" onClick={() => setIsFormOpen(true)}>
+          <Button onClick={() => setIsFormOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nuevo Proyecto
           </Button>
         </div>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <Card>
         <CardHeader>
           <div className="flex flex-col lg:flex-row gap-4">
@@ -142,12 +264,10 @@ export default function Projects() {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtros
-              </Button>
-            </div>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros Avanzados
+            </Button>
           </div>
         </CardHeader>
       </Card>
@@ -191,117 +311,34 @@ export default function Projects() {
         </Button>
       </div>
 
-      {/* Projects List */}
-      {isLoading ? (
-        <div className="grid gap-6">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-6 bg-muted rounded w-1/3 mb-4"></div>
-                <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
-                <div className="h-4 bg-muted rounded w-1/4"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredProjects.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Building className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No se encontraron proyectos</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              {searchTerm || statusFilter !== "all" 
-                ? "Intenta ajustar los filtros de búsqueda" 
-                : "Comienza creando tu primer proyecto"
-              }
-            </p>
-            {!searchTerm && statusFilter === "all" && (
-              <Button onClick={() => setIsFormOpen(true)} className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Plus className="h-4 w-4 mr-2" />
-                Crear Primer Proyecto
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {filteredProjects.map((project) => (
-            <Card key={project.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-                  {/* Project Info */}
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-xl font-semibold">{project.name}</h3>
-                      <Badge variant={project.status === 'activo' ? 'default' : project.status === 'completado' ? 'secondary' : project.status === 'pausado' ? 'destructive' : 'outline'}>
-                        {project.status}
-                      </Badge>
-                    </div>
-                    
-                    {project.client_name && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>Cliente: {project.client_name}</span>
-                      </div>
-                    )}
-                    
-                    {project.description && (
-                      <p className="text-muted-foreground">{project.description}</p>
-                    )}
-                    
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      {(project.city || project.location) && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
-                          <span>{project.city || project.location}</span>
-                        </div>
-                      )}
-                      
-                      {project.start_date && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>Inicio: {new Date(project.start_date).toLocaleDateString('es-ES')}</span>
-                        </div>
-                      )}
-                      
-                      {project.end_date && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>Fin: {new Date(project.end_date).toLocaleDateString('es-ES')}</span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {project.address && (
-                      <p className="text-sm text-muted-foreground">
-                        📍 {project.address}
-                      </p>
-                    )}
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      Ver Detalles
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Gestionar
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Data Table */}
+      <Card>
+        <CardContent className="p-6">
+          {isLoading ? (
+            <div className="text-center py-8">Cargando proyectos...</div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredProjects}
+              searchKey="name"
+              searchPlaceholder="Buscar proyectos..."
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onBulkDelete={handleBulkDelete}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Project Form Dialog */}
       <ProjectForm 
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setSelectedProject(null);
+        }}
         onProjectCreated={handleProjectCreated}
+        project={selectedProject}
       />
     </div>
   );

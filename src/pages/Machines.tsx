@@ -1,97 +1,202 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MachineCard } from "@/components/MachineCard";
-import { Search, Plus, Filter, Download, Grid, List, Truck } from "lucide-react";
+import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { Search, Plus, Filter, Download } from "lucide-react";
+import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-// Datos simulados - En una app real vendrían de una API
-const mockMachines = [
-  {
-    id: "1",
-    name: "Telehandler TH-001",
-    model: "JCB 535-95",
-    serialNumber: "JCB2023001",
-    status: "operational" as const,
-    location: "Obra Construcción A",
-    project: "Proyecto Edificio Oficinas",
-    operator: "Juan Pérez",
-    hourMeter: 1245,
-    lastInspection: "2024-01-15",
-    nextMaintenance: "2024-02-15",
-    fuelLevel: 75,
-  },
-  {
-    id: "2", 
-    name: "Minicargador ML-002",
-    model: "Bobcat S650",
-    serialNumber: "BOB2023002",
-    status: "maintenance" as const,
-    location: "Bodega B",
-    hourMeter: 2890,
-    lastInspection: "2024-01-10",
-    nextMaintenance: "2024-01-28",
-    fuelLevel: 45,
-  },
-  {
-    id: "3",
-    name: "Telehandler TH-003",
-    model: "Caterpillar TH3510D",
-    serialNumber: "CAT2023003",
-    status: "inspection" as const,
-    location: "Zona Industrial C",
-    project: "Planta Manufacturera",
-    operator: "María González",
-    hourMeter: 1567,
-    lastInspection: "2023-12-20",
-    nextMaintenance: "2024-02-01",
-    fuelLevel: 90,
-  },
-  {
-    id: "4",
-    name: "Excavadora EX-004",
-    model: "Komatsu PC200",
-    serialNumber: "KOM2023004",
-    status: "offline" as const,
-    location: "Depósito Central",
-    hourMeter: 3245,
-    lastInspection: "2024-01-05",
-    nextMaintenance: "2024-02-05",
-    fuelLevel: 20,
-  }
-];
+interface Machine {
+  id: string;
+  name: string;
+  brand?: string;
+  model?: string;
+  serial_number?: string;
+  status: string;
+  location?: string;
+  current_hours?: number;
+  next_preventive_hours?: number;
+  last_preop_date?: string;
+  created_at: string;
+}
 
 export default function Machines() {
+  const [machines, setMachines] = useState<Machine[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredMachines = mockMachines.filter(machine => {
+  useEffect(() => {
+    fetchMachines();
+  }, []);
+
+  const fetchMachines = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('machines')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setMachines(data || []);
+    } catch (error) {
+      console.error('Error fetching machines:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar las máquinas",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (machine: Machine) => {
+    try {
+      const { error } = await supabase
+        .from('machines')
+        .delete()
+        .eq('id', machine.id);
+
+      if (error) throw error;
+      
+      setMachines(prev => prev.filter(m => m.id !== machine.id));
+      toast({
+        title: "Éxito",
+        description: "Máquina eliminada correctamente"
+      });
+    } catch (error) {
+      console.error('Error deleting machine:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la máquina",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkDelete = async (selectedMachines: Machine[]) => {
+    try {
+      const ids = selectedMachines.map(m => m.id);
+      const { error } = await supabase
+        .from('machines')
+        .delete()
+        .in('id', ids);
+
+      if (error) throw error;
+      
+      setMachines(prev => prev.filter(m => !ids.includes(m.id)));
+      toast({
+        title: "Éxito",
+        description: `${selectedMachines.length} máquinas eliminadas correctamente`
+      });
+    } catch (error) {
+      console.error('Error bulk deleting machines:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron eliminar las máquinas seleccionadas",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const statusCounts = machines.reduce((acc, machine) => {
+    acc[machine.status] = (acc[machine.status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const filteredMachines = machines.filter(machine => {
     const matchesSearch = machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      machine.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      machine.location.toLowerCase().includes(searchTerm.toLowerCase());
+      machine.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      machine.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      machine.location?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
 
-  const handleViewDetails = (machineId: string) => {
-    console.log("Ver detalles de máquina:", machineId);
+  const getStatusBadge = (status: string) => {
+    const statusMap = {
+      'operativo': { label: 'Operativo', variant: 'default' as const },
+      'mantenimiento': { label: 'Mantenimiento', variant: 'destructive' as const },
+      'inspeccion': { label: 'Inspección', variant: 'secondary' as const },
+      'fuera_de_linea': { label: 'Fuera de Línea', variant: 'outline' as const }
+    };
+    
+    const config = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'outline' as const };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const handleStartInspection = (machineId: string) => {
-    console.log("Iniciar inspección de máquina:", machineId);
-  };
-
-  const statusCounts = {
-    all: mockMachines.length,
-    operational: mockMachines.filter(m => m.status === "operational").length,
-    maintenance: mockMachines.filter(m => m.status === "maintenance").length,
-    inspection: mockMachines.filter(m => m.status === "inspection").length,
-    offline: mockMachines.filter(m => m.status === "offline").length,
-  };
+  const columns: ColumnDef<Machine>[] = [
+    {
+      accessorKey: "name",
+      header: createSortableHeader("Nombre"),
+      cell: ({ row }) => (
+        <div className="font-medium">{row.getValue("name")}</div>
+      ),
+    },
+    {
+      accessorKey: "model",
+      header: "Modelo",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("model") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "brand",
+      header: "Marca",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("brand") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Estado",
+      cell: ({ row }) => getStatusBadge(row.getValue("status")),
+    },
+    {
+      accessorKey: "location",
+      header: "Ubicación",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("location") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "current_hours",
+      header: createSortableHeader("Horómetro"),
+      cell: ({ row }) => {
+        const hours = row.getValue("current_hours") as number;
+        return <div className="text-sm">{hours ? `${hours}h` : "-"}</div>;
+      },
+    },
+    {
+      accessorKey: "last_preop_date",
+      header: createSortableHeader("Último Preoperacional"),
+      cell: ({ row }) => {
+        const date = row.getValue("last_preop_date") as string;
+        return (
+          <div className="text-sm">
+            {date ? new Date(date).toLocaleDateString('es-ES') : "No registrado"}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
@@ -103,125 +208,116 @@ export default function Machines() {
             Administra y monitorea toda tu flota de equipos
           </p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Registrar Máquina
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Registrar Máquina
+          </Button>
+        </div>
       </div>
 
-      {/* Filtros y búsqueda */}
-      <Card className="shadow-card">
+      {/* Search */}
+      <Card>
         <CardHeader>
           <div className="flex flex-col lg:flex-row gap-4">
-            {/* Búsqueda */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Buscar por nombre, modelo o ubicación..."
+                  placeholder="Buscar por nombre, modelo, marca o ubicación..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
                 />
               </div>
             </div>
-            
-            {/* Controles */}
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtros
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={viewMode === "grid" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros Avanzados
+            </Button>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Filtros de estado */}
+      {/* Status Filter Buttons */}
       <div className="flex flex-wrap gap-2">
         <Button
           variant={statusFilter === "all" ? "default" : "outline"}
           size="sm"
           onClick={() => setStatusFilter("all")}
         >
-          Todas ({statusCounts.all})
+          Todas ({machines.length})
         </Button>
         <Button
-          variant={statusFilter === "operational" ? "default" : "outline"}
-          size="sm"  
-          onClick={() => setStatusFilter("operational")}
-        >
-          Operativas ({statusCounts.operational})
-        </Button>
-        <Button
-          variant={statusFilter === "maintenance" ? "default" : "outline"}
+          variant={statusFilter === "operativo" ? "default" : "outline"}
           size="sm"
-          onClick={() => setStatusFilter("maintenance")}
+          onClick={() => setStatusFilter("operativo")}
         >
-          Mantenimiento ({statusCounts.maintenance})
+          Operativas ({statusCounts.operativo || 0})
         </Button>
         <Button
-          variant={statusFilter === "inspection" ? "default" : "outline"}
+          variant={statusFilter === "mantenimiento" ? "default" : "outline"}
           size="sm"
-          onClick={() => setStatusFilter("inspection")}
+          onClick={() => setStatusFilter("mantenimiento")}
         >
-          Inspección ({statusCounts.inspection})
+          Mantenimiento ({statusCounts.mantenimiento || 0})
         </Button>
         <Button
-          variant={statusFilter === "offline" ? "default" : "outline"}
+          variant={statusFilter === "inspeccion" ? "default" : "outline"}
           size="sm"
-          onClick={() => setStatusFilter("offline")}
+          onClick={() => setStatusFilter("inspeccion")}
         >
-          Fuera de Línea ({statusCounts.offline})
+          Inspección ({statusCounts.inspeccion || 0})
+        </Button>
+        <Button
+          variant={statusFilter === "fuera_de_linea" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setStatusFilter("fuera_de_linea")}
+        >
+          Fuera de Línea ({statusCounts.fuera_de_linea || 0})
         </Button>
       </div>
 
-      {/* Lista de máquinas */}
-      <div className={viewMode === "grid" 
-        ? "grid gap-6 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3" 
-        : "space-y-4"
-      }>
-        {filteredMachines.map((machine) => (
-          <MachineCard
-            key={machine.id}
-            machine={machine}
-            onViewDetails={handleViewDetails}
-            onStartInspection={handleStartInspection}
-          />
-        ))}
-      </div>
-
-      {filteredMachines.length === 0 && (
-        <Card className="shadow-card">
-          <CardContent className="text-center py-12">
-            <div className="text-muted-foreground">
-              <Truck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-medium mb-2">No se encontraron máquinas</h3>
-              <p>No hay máquinas que coincidan con los filtros aplicados.</p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Data Table */}
+      <Card>
+        <CardContent className="p-6">
+          {isLoading ? (
+            <div className="text-center py-8">Cargando máquinas...</div>
+          ) : (
+            <AlertDialog>
+              <DataTable
+                columns={columns}
+                data={filteredMachines}
+                searchKey="name"
+                searchPlaceholder="Buscar máquinas..."
+                onEdit={(machine) => console.log("Edit machine:", machine)}
+                onDelete={(machine) => (
+                  <AlertDialogTrigger asChild>
+                    <button onClick={() => handleDelete(machine)}>Delete</button>
+                  </AlertDialogTrigger>
+                )}
+                onBulkDelete={handleBulkDelete}
+              />
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta acción no se puede deshacer. Esto eliminará permanentemente la máquina de la base de datos.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction>Eliminar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

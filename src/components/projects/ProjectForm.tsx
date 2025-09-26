@@ -36,6 +36,7 @@ interface ProjectFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProjectCreated: () => void;
+  project?: any; // For editing mode
 }
 
 interface ProjectFormData {
@@ -50,13 +51,13 @@ interface ProjectFormData {
   status: string;
 }
 
-export function ProjectForm({ open, onOpenChange, onProjectCreated }: ProjectFormProps) {
+export function ProjectForm({ open, onOpenChange, onProjectCreated, project }: ProjectFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedClients, setSelectedClients] = useState<Client[]>([]);
   const [selectedMachinesByClient, setSelectedMachinesByClient] = useState<Record<string, Machine[]>>({});
   
-  const [formData, setFormData] = useState<ProjectFormData>({
+  const initialData = {
     name: "",
     description: "",
     location: "",
@@ -66,7 +67,11 @@ export function ProjectForm({ open, onOpenChange, onProjectCreated }: ProjectFor
     start_date: "",
     end_date: "",
     status: "planificacion"
-  });
+  };
+  
+  const [formData, setFormData] = useState<ProjectFormData>(
+    project ? { ...initialData, ...project } : initialData
+  );
 
   const handleFormChange = (field: keyof ProjectFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -129,68 +134,98 @@ export function ProjectForm({ open, onOpenChange, onProjectCreated }: ProjectFor
     setIsSubmitting(true);
     
     try {
-      // Create project
-      const { data: project, error: projectError } = await supabase
-        .from('projects')
-        .insert({
-          name: formData.name,
-          description: formData.description,
-          location: formData.location,
-          city: formData.city,
-          country: formData.country,
-          address: formData.address,
-          start_date: formData.start_date || null,
-          end_date: formData.end_date || null,
-          status: formData.status
-        })
-        .select()
-        .single();
+      let projectResult;
+      
+      if (project) {
+        // Update existing project
+        projectResult = await supabase
+          .from('projects')
+          .update({
+            name: formData.name,
+            description: formData.description,
+            location: formData.location,
+            city: formData.city,
+            country: formData.country,
+            address: formData.address,
+            start_date: formData.start_date || null,
+            end_date: formData.end_date || null,
+            status: formData.status
+          })
+          .eq('id', project.id)
+          .select()
+          .single();
+      } else {
+        // Create new project
+        projectResult = await supabase
+          .from('projects')
+          .insert({
+            name: formData.name,
+            description: formData.description,
+            location: formData.location,
+            city: formData.city,
+            country: formData.country,
+            address: formData.address,
+            start_date: formData.start_date || null,
+            end_date: formData.end_date || null,
+            status: formData.status
+          })
+          .select()
+          .single();
+      }
 
-      if (projectError) throw projectError;
+      if (projectResult.error) throw projectResult.error;
 
-      // Link clients to project
-      const clientInserts = selectedClients.map(client => ({
-        project_id: project.id,
-        client_id: client.id
-      }));
+      // Only update relationships for new projects or when clients/machines change
+      if (!project || selectedClients.length > 0) {
+        // For existing projects, we might want to update relationships too
+        if (project && selectedClients.length > 0) {
+          // Delete existing relationships
+          await supabase.from('project_clients').delete().eq('project_id', project.id);
+          await supabase.from('project_machines').delete().eq('project_id', project.id);
+        }
 
-      const { error: clientsError } = await supabase
-        .from('project_clients')
-        .insert(clientInserts);
+        if (selectedClients.length > 0) {
+          // Link clients to project
+          const clientInserts = selectedClients.map(client => ({
+            project_id: projectResult.data.id,
+            client_id: client.id
+          }));
 
-      if (clientsError) throw clientsError;
+          const { error: clientsError } = await supabase
+            .from('project_clients')
+            .insert(clientInserts);
 
-      // Link machines to project
-      const allMachines = Object.values(selectedMachinesByClient).flat();
-      const machineInserts = allMachines.map(machine => ({
-        project_id: project.id,
-        machine_id: machine.id
-      }));
+          if (clientsError) throw clientsError;
 
-      const { error: machinesError } = await supabase
-        .from('project_machines')
-        .insert(machineInserts);
+          // Link machines to project
+          const allMachines = Object.values(selectedMachinesByClient).flat();
+          if (allMachines.length > 0) {
+            const machineInserts = allMachines.map(machine => ({
+              project_id: projectResult.data.id,
+              machine_id: machine.id
+            }));
 
-      if (machinesError) throw machinesError;
+            const { error: machinesError } = await supabase
+              .from('project_machines')
+              .insert(machineInserts);
+
+            if (machinesError) throw machinesError;
+          }
+        }
+      }
 
       toast({
-        title: "Proyecto creado",
-        description: `El proyecto "${formData.name}" se creó correctamente`,
+        title: project ? "Proyecto actualizado" : "Proyecto creado",
+        description: project 
+          ? `El proyecto "${formData.name}" se actualizó correctamente`
+          : `El proyecto "${formData.name}" se creó correctamente`,
         variant: "default"
       });
 
-      // Reset form
-      setFormData({
-        name: "",
-        description: "",
-        location: "",
-        city: "",
-        country: "Colombia", 
-        address: "",
-        start_date: "",
-        end_date: "",
-        status: "planificacion"
-      });
+      // Reset form only if creating new project
+      if (!project) {
+        setFormData(initialData);
+      }
       setSelectedClients([]);
       setSelectedMachinesByClient({});
 
@@ -213,9 +248,12 @@ export function ProjectForm({ open, onOpenChange, onProjectCreated }: ProjectFor
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Crear Nuevo Proyecto</DialogTitle>
+          <DialogTitle>{project ? "Editar Proyecto" : "Crear Nuevo Proyecto"}</DialogTitle>
           <DialogDescription>
-            Complete la información del proyecto, seleccione clientes y asigne máquinas
+            {project 
+              ? "Actualiza la información del proyecto"
+              : "Complete la información del proyecto, seleccione clientes y asigne máquinas"
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -391,7 +429,10 @@ export function ProjectForm({ open, onOpenChange, onProjectCreated }: ProjectFor
             className="bg-yellow-500 hover:bg-yellow-600 text-black"
           >
             <Save className="h-4 w-4 mr-2" />
-            {isSubmitting ? "Creando..." : "Crear Proyecto"}
+            {isSubmitting 
+              ? (project ? "Actualizando..." : "Creando...") 
+              : (project ? "Actualizar Proyecto" : "Crear Proyecto")
+            }
           </Button>
         </div>
       </DialogContent>

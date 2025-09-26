@@ -1,12 +1,25 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Filter, Download, Building2, Phone, Mail, MapPin, Globe } from "lucide-react";
+import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { Search, Plus, Filter, Download, Building2 } from "lucide-react";
 import { ClientForm } from "@/components/clients/ClientForm";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Client {
   id: string;
@@ -25,34 +38,15 @@ interface Client {
 
 export default function Clients() {
   const [clients, setClients] = useState<Client[]>([]);
-  const [filteredClients, setFilteredClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   useEffect(() => {
     fetchClients();
   }, []);
-
-  useEffect(() => {
-    let filtered = clients;
-    
-    if (searchTerm) {
-      filtered = filtered.filter(client =>
-        client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.city?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(client => client.status === statusFilter);
-    }
-    
-    setFilteredClients(filtered);
-  }, [clients, searchTerm, statusFilter]);
 
   const fetchClients = async () => {
     try {
@@ -65,25 +59,68 @@ export default function Clients() {
       setClients(data || []);
     } catch (error) {
       console.error('Error fetching clients:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los clientes",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      minimumFractionDigits: 0,
-    }).format(amount);
+  const handleEdit = (client: Client) => {
+    setSelectedClient(client);
+    setIsFormOpen(true);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+  const handleDelete = async (client: Client) => {
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .eq('id', client.id);
+
+      if (error) throw error;
+      
+      setClients(prev => prev.filter(c => c.id !== client.id));
+      toast({
+        title: "Éxito",
+        description: "Cliente eliminado correctamente"
+      });
+    } catch (error) {
+      console.error('Error deleting client:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar el cliente",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBulkDelete = async (selectedClients: Client[]) => {
+    try {
+      const ids = selectedClients.map(c => c.id);
+      const { error } = await supabase
+        .from('clients')
+        .delete()
+        .in('id', ids);
+
+      if (error) throw error;
+      
+      setClients(prev => prev.filter(c => !ids.includes(c.id)));
+      toast({
+        title: "Éxito",
+        description: `${selectedClients.length} clientes eliminados correctamente`
+      });
+    } catch (error) {
+      console.error('Error bulk deleting clients:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron eliminar los clientes seleccionados",
+        variant: "destructive"
+      });
+    }
   };
 
   const statusCounts = clients.reduce((acc, client) => {
@@ -91,9 +128,87 @@ export default function Clients() {
     return acc;
   }, {} as Record<string, number>);
 
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.contact_person?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.city?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   const handleClientCreated = () => {
-    fetchClients(); // Refresh the clients list
+    fetchClients();
+    setIsFormOpen(false);
+    setSelectedClient(null);
   };
+
+  const columns: ColumnDef<Client>[] = [
+    {
+      accessorKey: "name",
+      header: createSortableHeader("Nombre"),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{row.getValue("name")}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "contact_person",
+      header: "Contacto",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("contact_person") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("email") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "phone",
+      header: "Teléfono",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("phone") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "city",
+      header: "Ciudad",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("city") || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "status",
+      header: "Estado",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+        return (
+          <Badge variant={status === "activo" ? "default" : "secondary"}>
+            {status === "activo" ? "Activo" : "Inactivo"}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "created_at",
+      header: createSortableHeader("Fecha Registro"),
+      cell: ({ row }) => {
+        const date = row.getValue("created_at") as string;
+        return (
+          <div className="text-sm">
+            {new Date(date).toLocaleDateString('es-ES')}
+          </div>
+        );
+      },
+    },
+  ];
 
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
@@ -105,14 +220,20 @@ export default function Clients() {
             Administra tu cartera de clientes y proyectos
           </p>
         </div>
-        <Button className="bg-yellow-500 hover:bg-yellow-600 text-black" onClick={() => setIsFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Cliente
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Cliente
+          </Button>
+        </div>
       </div>
 
-      {/* Búsqueda y filtros */}
-      <Card className="shadow-card">
+      {/* Search */}
+      <Card>
         <CardHeader>
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
@@ -126,21 +247,15 @@ export default function Clients() {
                 />
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filtros
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
-            </div>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros Avanzados
+            </Button>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Filtros de estado */}
+      {/* Status Filter Buttons */}
       <div className="flex flex-wrap gap-2">
         <Button
           variant={statusFilter === "all" ? "default" : "outline"}
@@ -165,142 +280,34 @@ export default function Clients() {
         </Button>
       </div>
 
-      {/* Lista de clientes */}
-      {isLoading ? (
-        <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-12 w-12 rounded-lg" />
-                    <div>
-                      <Skeleton className="h-5 w-32 mb-2" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-6 w-16" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-48" />
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-4 w-40" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : filteredClients.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No se encontraron clientes</h3>
-            <p className="text-muted-foreground text-center mb-4">
-              {searchTerm || statusFilter !== "all" 
-                ? "Intenta ajustar los filtros de búsqueda" 
-                : "Comienza creando tu primer cliente"
-              }
-            </p>
-            {!searchTerm && statusFilter === "all" && (
-              <Button onClick={() => setIsFormOpen(true)} className="bg-yellow-500 hover:bg-yellow-600 text-black">
-                <Plus className="h-4 w-4 mr-2" />
-                Crear Primer Cliente
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
-          {filteredClients.map((client) => (
-            <Card key={client.id} className="shadow-card hover:shadow-elevated transition-shadow duration-200">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Building2 className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">{client.name}</h3>
-                      {client.contact_person && (
-                        <p className="text-sm text-muted-foreground">{client.contact_person}</p>
-                      )}
-                    </div>
-                  </div>
-                  <Badge variant={client.status === "activo" ? "default" : "secondary"}>
-                    {client.status === "activo" ? "Activo" : "Inactivo"}
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* Información de contacto */}
-                <div className="space-y-2">
-                  {client.email && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <span className="truncate">{client.email}</span>
-                    </div>
-                  )}
-                  {client.phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{client.phone}</span>
-                    </div>
-                  )}
-                  {client.website && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <span className="truncate">{client.website}</span>
-                    </div>
-                  )}
-                  {(client.address || client.city) && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <span className="text-sm">
-                        {client.address && client.city 
-                          ? `${client.address}, ${client.city}` 
-                          : client.address || client.city
-                        }
-                      </span>
-                    </div>
-                  )}
-                  {client.tax_id && (
-                    <div className="text-sm text-muted-foreground">
-                      NIT: {client.tax_id}
-                    </div>
-                  )}
-                </div>
-
-                {/* Fecha de creación */}
-                <div className="pt-2 border-t">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Registrado</span>
-                    <span className="text-sm">{formatDate(client.created_at)}</span>
-                  </div>
-                </div>
-
-                {/* Botones de acción */}
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" className="flex-1">
-                    Ver Detalles
-                  </Button>
-                  <Button className="flex-1">
-                    Nuevo Proyecto
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+      {/* Data Table */}
+      <Card>
+        <CardContent className="p-6">
+          {isLoading ? (
+            <div className="text-center py-8">Cargando clientes...</div>
+          ) : (
+            <DataTable
+              columns={columns}
+              data={filteredClients}
+              searchKey="name"
+              searchPlaceholder="Buscar clientes..."
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onBulkDelete={handleBulkDelete}
+            />
+          )}
+        </CardContent>
+      </Card>
 
       {/* Client Form Dialog */}
       <ClientForm 
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setSelectedClient(null);
+        }}
         onClientCreated={handleClientCreated}
+        client={selectedClient}
       />
     </div>
   );
