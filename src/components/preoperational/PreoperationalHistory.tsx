@@ -67,13 +67,39 @@ export function PreoperationalHistory() {
   const loadRecords = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // First get preoperational records
+      const { data: preoperationalData, error: preoperationalError } = await supabase
         .from('preoperational')
         .select('*')
         .order('datetime', { ascending: false });
 
-      if (error) throw error;
-      setRecords(data || []);
+      if (preoperationalError) throw preoperationalError;
+
+      // Get projects and machines separately to avoid relation issues
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('id, name');
+
+      const { data: machinesData, error: machinesError } = await supabase
+        .from('machines')
+        .select('id, name');
+
+      if (projectsError) throw projectsError;
+      if (machinesError) throw machinesError;
+
+      // Create lookup maps
+      const projectsMap = new Map(projectsData?.map(p => [p.id, p.name]) || []);
+      const machinesMap = new Map(machinesData?.map(m => [m.id, m.name]) || []);
+
+      // Combine the data
+      const enrichedRecords = (preoperationalData || []).map(record => ({
+        ...record,
+        projects: { name: projectsMap.get(record.project_id) || 'Proyecto desconocido' },
+        machines: { name: machinesMap.get(record.machine_id) || 'Máquina desconocida' }
+      }));
+
+      setRecords(enrichedRecords);
     } catch (error) {
       console.error('Error loading preoperational records:', error);
       toast({
@@ -92,18 +118,18 @@ export function PreoperationalHistory() {
     if (searchTerm) {
       filtered = filtered.filter(record =>
         record.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.machine_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.project_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.machines?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        record.projects?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         record.observations?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     if (projectFilter !== "all") {
-      filtered = filtered.filter(record => record.project_id === projectFilter);
+      filtered = filtered.filter(record => record.projects?.name === projectFilter);
     }
 
     if (machineFilter !== "all") {
-      filtered = filtered.filter(record => record.machine_id === machineFilter);
+      filtered = filtered.filter(record => record.machines?.name === machineFilter);
     }
 
     if (dateFilter) {
@@ -174,14 +200,14 @@ export function PreoperationalHistory() {
       cell: ({ row }: any) => format(new Date(row.original.datetime), 'dd/MM/yyyy HH:mm'),
     },
     {
-      id: "project_id",
+      id: "project",
       header: "Proyecto",
-      cell: ({ row }: any) => row.original.project_id || "-",
+      cell: ({ row }: any) => row.original.projects?.name || "Sin proyecto",
     },
     {
-      id: "machine_id",
-      header: "Máquina",
-      cell: ({ row }: any) => row.original.machine_id || "-",
+      id: "machine",
+      header: "Máquina", 
+      cell: ({ row }: any) => row.original.machines?.name || "Sin máquina",
     },
     {
       id: "username",
@@ -263,8 +289,8 @@ export function PreoperationalHistory() {
     { key: 'observations', label: 'Observaciones', type: 'textarea' as const, editable: true, section: 'mantenimiento' },
   ];
 
-  const uniqueProjects = Array.from(new Set(records.map(r => r.project_id).filter(Boolean)));
-  const uniqueMachines = Array.from(new Set(records.map(r => r.machine_id).filter(Boolean)));
+  const uniqueProjects = Array.from(new Set(records.map(r => r.projects?.name).filter(Boolean)));
+  const uniqueMachines = Array.from(new Set(records.map(r => r.machines?.name).filter(Boolean)));
 
   return (
     <div className="space-y-6">
@@ -336,7 +362,7 @@ export function PreoperationalHistory() {
         <DetailModal
           open={detailModalOpen}
           onOpenChange={setDetailModalOpen}
-          title={`Preoperacional - ${selectedRecord.machine_id || 'Sin máquina'}`}
+          title={`Preoperacional - ${selectedRecord.machines?.name || 'Sin máquina'}`}
           data={selectedRecord}
           fields={detailFields}
           onSave={handleEdit}
