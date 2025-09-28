@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
+import { PreoperationalMobileCard } from "@/components/preoperational/PreoperationalMobileCard";
 import { DetailModal } from "@/components/ui/detail-modal";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -9,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Filter, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { createSortableHeader } from "@/components/ui/data-table";
 import { useTablePreferences } from "@/hooks/useTablePreferences";
 import { format } from "date-fns";
 
@@ -348,12 +349,20 @@ export function PreoperationalHistory() {
             </Button>
           </div>
 
-          <DataTable
+          <AdaptiveDataView
             columns={columns}
             data={filteredRecords}
-            onView={handleView}
+            searchKey="username"
             searchPlaceholder="Buscar registros..."
-            enableColumnVisibility={true}
+            mobileCardComponent={(record) => (
+              <PreoperationalMobileCard
+                record={record}
+                onView={handleView}
+                onEdit={handleEdit}
+              />
+            )}
+            emptyMessage="No se encontraron registros preoperacionales"
+            loading={loading}
           />
         </CardContent>
       </Card>

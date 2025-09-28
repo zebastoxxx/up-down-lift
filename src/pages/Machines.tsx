@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
+import { MachineMobileCard } from "@/components/machines/MachineMobileCard";
 import { Search, Plus, Filter, Download } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "@/hooks/use-toast";
@@ -32,6 +34,17 @@ export default function Machines() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+
+  // Handlers for machine actions
+  const handleViewDetails = (machine: Machine) => {
+    console.log('View details for machine:', machine);
+    // TODO: Implement machine details modal
+  };
+
+  const handleStartInspection = (machine: Machine) => {
+    console.log('Start inspection for machine:', machine);
+    // TODO: Navigate to preoperational form with selected machine
+  };
   useEffect(() => {
     fetchMachines();
   }, []);
@@ -261,7 +274,26 @@ export default function Machines() {
       {/* Data Table */}
       <Card>
         <CardContent className="p-6">
-          {isLoading ? <div className="text-center py-8">Cargando máquinas...</div> : <DataTable columns={columns} data={filteredMachines} searchKey="name" searchPlaceholder="Buscar máquinas..." onBulkDelete={handleBulkDelete} />}
+          {isLoading ? (
+            <div className="text-center py-8">Cargando máquinas...</div>
+          ) : (
+            <AdaptiveDataView
+              columns={columns}
+              data={filteredMachines}
+              searchKey="name"
+              searchPlaceholder="Buscar máquinas..."
+              onBulkDelete={handleBulkDelete}
+              mobileCardComponent={(machine) => (
+                <MachineMobileCard
+                  machine={machine}
+                  onViewDetails={handleViewDetails}
+                  onStartInspection={handleStartInspection}
+                />
+              )}
+              emptyMessage="No se encontraron máquinas"
+              loading={isLoading}
+            />
+          )}
         </CardContent>
       </Card>
 

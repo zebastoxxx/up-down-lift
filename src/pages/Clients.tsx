@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
+import { ClientMobileCard } from "@/components/clients/ClientMobileCard";
 import { Search, Plus, Filter, Download, Building2 } from "lucide-react";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { ColumnDef } from "@tanstack/react-table";
@@ -322,7 +324,7 @@ export default function Clients() {
           {isLoading ? (
             <div className="text-center py-8">Cargando clientes...</div>
           ) : (
-            <DataTable
+            <AdaptiveDataView
               columns={columns}
               data={filteredClients}
               searchKey="name"
@@ -330,6 +332,15 @@ export default function Clients() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onBulkDelete={handleBulkDelete}
+              mobileCardComponent={(client) => (
+                <ClientMobileCard
+                  client={client}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              )}
+              emptyMessage="No se encontraron clientes"
+              loading={isLoading}
             />
           )}
         </CardContent>

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
+import { ProjectMobileCard } from "@/components/projects/ProjectMobileCard";
 import { Search, Plus, Filter, Download, Building, Grid, List, MapPin, Calendar, Users, ChevronDown, ArrowUpDown } from "lucide-react";
 import { ProjectForm } from "@/components/projects/ProjectForm";
 import { ColumnDef } from "@tanstack/react-table";
@@ -436,7 +438,7 @@ export default function Projects() {
       ) : viewMode === "table" ? (
         <Card>
           <CardContent className="p-6">
-            <DataTable
+            <AdaptiveDataView
               columns={columns}
               data={filteredProjects}
               searchKey="name"
@@ -445,6 +447,15 @@ export default function Projects() {
               onDelete={handleDelete}
               onBulkDelete={handleBulkDelete}
               enableMultiSelect={true}
+              mobileCardComponent={(project) => (
+                <ProjectMobileCard
+                  project={project}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              )}
+              emptyMessage="No se encontraron proyectos"
+              loading={isLoading}
             />
           </CardContent>
         </Card>

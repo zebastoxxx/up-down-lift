@@ -2,9 +2,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PWAInstallBanner } from "@/components/ui/pwa-install-banner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { LogOut } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { cn } from "@/lib/utils";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +15,7 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   const { signOut, user } = useAuth();
+  const isMobile = useIsMobile();
   
   const handleLogout = async () => {
     await signOut();
@@ -22,7 +26,10 @@ export default function Layout({ children }: LayoutProps) {
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           {/* Header */}
-          <header className="h-16 border-b bg-gradient-header flex items-center justify-between px-4 sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <header className={cn(
+            "h-16 border-b bg-gradient-header flex items-center justify-between px-4 sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+            isMobile && "h-14"
+          )}>
             <div className="flex items-center gap-4">
               <SidebarTrigger className="-ml-1" />
               <div className="flex items-center gap-3">
@@ -48,6 +55,9 @@ export default function Layout({ children }: LayoutProps) {
               </Button>
             </div>
           </header>
+
+          {/* PWA Install Banner */}
+          <PWAInstallBanner />
 
           {/* Main Content */}
           <main className="flex-1 overflow-auto">
