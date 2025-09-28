@@ -8,13 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
+import { UserMobileCard } from "@/components/users/UserMobileCard";
 import { DetailModal } from "@/components/ui/detail-modal";
 import { Database, UserPlus, Users, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { createSortableHeader } from "@/components/ui/data-table";
 import { z } from "zod";
 
 interface User {
@@ -279,7 +280,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-6xl">
+    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-6xl mobile-scroll overflow-x-hidden">
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Configuración</h1>
@@ -289,30 +290,36 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="users">Gestión de Usuarios</TabsTrigger>
-          <TabsTrigger value="system">Sistema</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto sm:max-w-none">
+          <TabsTrigger value="users" className="text-sm">
+            Usuarios
+          </TabsTrigger>
+          <TabsTrigger value="system" className="text-sm">
+            Sistema
+          </TabsTrigger>
         </TabsList>
 
         {/* Users Management */}
-        <TabsContent value="users" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  <div>
-                    <CardTitle>Gestión de Usuarios</CardTitle>
-                    <CardDescription>
-                      Crea y administra cuentas de usuario y sus permisos
+        <TabsContent value="users" className="space-y-6 overflow-x-hidden">
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-2 min-w-0">
+                  <Users className="h-5 w-5 mt-0.5 sm:mt-0 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <CardTitle className="text-lg sm:text-xl">Gestión de Usuarios</CardTitle>
+                    <CardDescription className="text-sm">
+                      Administra cuentas de usuario y permisos
                     </CardDescription>
                   </div>
                 </div>
+                
                 <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button>
+                    <Button className="w-full sm:w-auto">
                       <UserPlus className="h-4 w-4 mr-2" />
-                      Crear Usuario
+                      <span className="hidden sm:inline">Crear Usuario</span>
+                      <span className="sm:hidden">Crear</span>
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -390,15 +397,26 @@ export default function Settings() {
                 </Dialog>
               </div>
             </CardHeader>
-            <CardContent>
-              <DataTable
-                columns={columns}
-                data={users}
-                onView={handleViewUser}
-                onDelete={handleDeleteUser}
-                enableColumnVisibility={true}
-                searchPlaceholder="Buscar usuarios..."
-              />
+            <CardContent className="p-4 sm:p-6 overflow-hidden">
+              {loading ? (
+                <div className="text-center py-8">Cargando usuarios...</div>
+              ) : (
+                <AdaptiveDataView
+                  columns={columns}
+                  data={users}
+                  searchKey="username"
+                  searchPlaceholder="Buscar usuarios..."
+                  mobileCardComponent={(user) => (
+                    <UserMobileCard
+                      user={user}
+                      onView={handleViewUser}
+                      onDelete={handleDeleteUser}
+                    />
+                  )}
+                  emptyMessage="No se encontraron usuarios"
+                  loading={loading}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -481,7 +499,7 @@ export default function Settings() {
         <DetailModal
           open={detailModalOpen}
           onOpenChange={setDetailModalOpen}
-          title={`Usuario - ${selectedUser.username}`}
+          title={`Usuario - ${selectedUser.full_name || selectedUser.username}`}
           data={selectedUser}
           fields={userDetailFields}
           onSave={handleEditUser}
