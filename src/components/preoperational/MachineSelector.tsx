@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Settings, ArrowLeft, Clock } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-
 interface Machine {
   id: string;
   name: string;
@@ -17,40 +16,37 @@ interface Machine {
   serial_number?: string;
   location?: string;
 }
-
 interface MachineSelectorProps {
   projectId: string;
   onMachineSelect: (machine: Machine) => void;
   selectedMachine: Machine | null;
   onBack: () => void;
 }
-
-export function MachineSelector({ projectId, onMachineSelect, selectedMachine, onBack }: MachineSelectorProps) {
+export function MachineSelector({
+  projectId,
+  onMachineSelect,
+  selectedMachine,
+  onBack
+}: MachineSelectorProps) {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     if (projectId) {
       fetchMachines();
     }
   }, [projectId]);
-
   useEffect(() => {
-    const filtered = machines.filter(machine =>
-      machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      machine.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      machine.brand?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = machines.filter(machine => machine.name.toLowerCase().includes(searchTerm.toLowerCase()) || machine.model?.toLowerCase().includes(searchTerm.toLowerCase()) || machine.brand?.toLowerCase().includes(searchTerm.toLowerCase()));
     setFilteredMachines(filtered);
   }, [machines, searchTerm]);
-
   const fetchMachines = async () => {
     try {
-      const { data, error } = await supabase
-        .from('project_machines')
-        .select(`
+      const {
+        data,
+        error
+      } = await supabase.from('project_machines').select(`
           machine_id,
           machines (
             id,
@@ -62,11 +58,8 @@ export function MachineSelector({ projectId, onMachineSelect, selectedMachine, o
             serial_number,
             location
           )
-        `)
-        .eq('project_id', projectId);
-
+        `).eq('project_id', projectId);
       if (error) throw error;
-      
       const machineData = data?.map(item => item.machines).filter(Boolean) || [];
       setMachines(machineData as Machine[]);
     } catch (error) {
@@ -75,7 +68,6 @@ export function MachineSelector({ projectId, onMachineSelect, selectedMachine, o
       setIsLoading(false);
     }
   };
-
   const getStatusBadge = (status: string) => {
     const variants = {
       operativo: "default",
@@ -83,34 +75,24 @@ export function MachineSelector({ projectId, onMachineSelect, selectedMachine, o
       reparacion: "destructive",
       fuera_servicio: "outline"
     } as const;
-    
     const colors = {
       operativo: "bg-green-100 text-green-800",
       mantenimiento: "bg-yellow-100 text-yellow-800",
       reparacion: "bg-red-100 text-red-800",
       fuera_servicio: "bg-gray-100 text-gray-800"
     } as const;
-    
-    return (
-      <Badge 
-        variant={variants[status as keyof typeof variants] || "outline"}
-        className={colors[status as keyof typeof colors] || ""}
-      >
+    return <Badge variant={variants[status as keyof typeof variants] || "outline"} className={colors[status as keyof typeof colors] || ""}>
         {status.replace('_', ' ')}
-      </Badge>
-    );
+      </Badge>;
   };
-
   const formatHours = (hours: number) => {
     return new Intl.NumberFormat('es-ES', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1
     }).format(hours);
   };
-
   if (isLoading) {
-    return (
-      <div className="space-y-4 p-4">
+    return <div className="space-y-4 p-4">
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-48" />
@@ -121,22 +103,17 @@ export function MachineSelector({ projectId, onMachineSelect, selectedMachine, o
           </CardContent>
         </Card>
         <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <Card key={i}>
+          {[1, 2, 3].map(i => <Card key={i}>
               <CardContent className="p-4">
                 <Skeleton className="h-5 w-48 mb-2" />
                 <Skeleton className="h-4 w-32 mb-2" />
                 <Skeleton className="h-4 w-24" />
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-4 p-4">
+  return <div className="space-y-4 p-4">
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
@@ -154,37 +131,17 @@ export function MachineSelector({ projectId, onMachineSelect, selectedMachine, o
             </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nombre, modelo o marca..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
+        
       </Card>
 
       <div className="space-y-3">
-        {filteredMachines.length === 0 ? (
-          <Card>
+        {filteredMachines.length === 0 ? <Card>
             <CardContent className="p-8 text-center">
               <p className="text-muted-foreground">
                 {searchTerm ? "No se encontraron máquinas" : "No hay máquinas asignadas a este proyecto"}
               </p>
             </CardContent>
-          </Card>
-        ) : (
-          filteredMachines.map((machine) => (
-            <Card 
-              key={machine.id}
-              className={`cursor-pointer transition-colors hover:bg-accent ${
-                selectedMachine?.id === machine.id ? 'ring-2 ring-primary' : ''
-              }`}
-              onClick={() => onMachineSelect(machine)}
-            >
+          </Card> : filteredMachines.map(machine => <Card key={machine.id} className={`cursor-pointer transition-colors hover:bg-accent ${selectedMachine?.id === machine.id ? 'ring-2 ring-primary' : ''}`} onClick={() => onMachineSelect(machine)}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div>
@@ -203,27 +160,20 @@ export function MachineSelector({ projectId, onMachineSelect, selectedMachine, o
                     <span className="font-medium">{formatHours(machine.current_hours || 0)}h</span>
                   </div>
                   
-                  {machine.serial_number && (
-                    <div>
+                  {machine.serial_number && <div>
                       <span className="text-muted-foreground">Serie:</span>
                       <span className="font-medium ml-1">{machine.serial_number}</span>
-                    </div>
-                  )}
+                    </div>}
                 </div>
 
-                {machine.location && (
-                  <p className="text-sm text-muted-foreground mt-2">
+                {machine.location && <p className="text-sm text-muted-foreground mt-2">
                     Ubicación: {machine.location}
-                  </p>
-                )}
+                  </p>}
               </CardContent>
-            </Card>
-          ))
-        )}
+            </Card>)}
       </div>
 
-      {selectedMachine && (
-        <div className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto">
+      {selectedMachine && <div className="fixed bottom-4 left-4 right-4 max-w-2xl mx-auto">
           <Card className="border-primary shadow-lg">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -233,17 +183,12 @@ export function MachineSelector({ projectId, onMachineSelect, selectedMachine, o
                     {selectedMachine.name} - {formatHours(selectedMachine.current_hours || 0)}h
                   </p>
                 </div>
-                <Button
-                  onClick={() => onMachineSelect(selectedMachine)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-black"
-                >
+                <Button onClick={() => onMachineSelect(selectedMachine)} className="bg-yellow-500 hover:bg-yellow-600 text-black">
                   Continuar
                 </Button>
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
