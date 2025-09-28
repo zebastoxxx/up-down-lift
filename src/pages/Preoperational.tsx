@@ -58,8 +58,7 @@ const CHECKLIST_ITEMS = [
 export default function Preoperational() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  // Temporarily use hardcoded user ID until auth context issue is resolved
-  const user = { id: '00000000-0000-0000-0000-000000000000' };
+  const { user } = useAuth(); // Use actual auth context
   
   // Step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -207,13 +206,24 @@ export default function Preoperational() {
     setIsSubmitting(true);
     
     try {
+      // Validate user is authenticated
+      if (!user || !user.id) {
+        toast({
+          title: "Error de autenticación",
+          description: "Debe estar autenticado para enviar el formulario",
+          variant: "destructive"
+        });
+        return;
+      }
+
       // Create preoperational record
       const { data, error } = await supabase
         .from('preoperational')
         .insert({
           machine_id: selectedMachine!.id,
           project_id: selectedProject!.id,
-          user_id: user?.id || '',
+          user_id: user.id,
+          username: user.full_name || user.username, // Save the user's name for display
           datetime: formData.datetime,
           ...formData,
           checklist: Object.entries(checklist).map(([key, value]) => ({
@@ -232,7 +242,7 @@ export default function Preoperational() {
       
       toast({
         title: "Preoperacional enviado",
-        description: isOnline ? "El formulario se ha guardado correctamente" : "Se guardó localmente y se sincronizará cuando haya conexión",
+        description: `Formulario enviado por ${user.full_name || user.username}. ${isOnline ? 'Guardado correctamente' : 'Se guardó localmente y se sincronizará cuando haya conexión'}`,
         variant: "default"
       });
 
@@ -264,6 +274,11 @@ export default function Preoperational() {
               : "Formulario diario de inspección"
             }
           </p>
+          {user && (
+            <p className="text-xs text-muted-foreground mt-1">
+              👤 Operador: {user.full_name || user.username}
+            </p>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -535,6 +550,32 @@ export default function Preoperational() {
               </CardContent>
             </Card>
 
+            {/* User Information Summary */}
+            <Card className="bg-primary/5 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-primary">
+                  <CheckCircle className="h-5 w-5" />
+                  Información del Operador
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-lg">👤</span>
+                  </div>
+                  <div>
+                    <p className="font-medium">{user?.full_name || user?.username}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Rol: {user?.role === 'operario' ? 'Operario' : user?.role === 'supervisor' ? 'Supervisor' : 'Administrador'}
+                    </p>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Al enviar este formulario, se registrará su firma digital con fecha y hora.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Submit Button */}
             <div className="pb-6">
               <Button
@@ -567,8 +608,13 @@ export default function Preoperational() {
         <h1 className="text-2xl sm:text-3xl font-bold">Preoperacional</h1>
         <p className="text-muted-foreground">
           Realiza inspecciones preoperacionales y consulta el historial
-        </p>
-      </div>
+          </p>
+          {user && (
+            <p className="text-xs text-muted-foreground mt-1">
+              👤 Operador: {user.full_name || user.username}
+            </p>
+          )}
+        </div>
 
       <Tabs defaultValue="form" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
@@ -591,4 +637,24 @@ export default function Preoperational() {
       </Tabs>
     </div>
   );
+
+  // Show authentication required message if user is not logged in
+  if (!user) {
+    return (
+      <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Autenticación Requerida</h2>
+            <p className="text-muted-foreground mb-4">
+              Debe iniciar sesión para completar un formulario preoperacional.
+            </p>
+            <Button onClick={() => navigate('/auth')}>
+              Iniciar Sesión
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 }
