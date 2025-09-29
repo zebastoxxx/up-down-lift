@@ -26,8 +26,6 @@ const App = () => (
       disableTransitionOnChange
     >
       <AuthProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
@@ -93,6 +91,8 @@ const App = () => (
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Toaster />
+        <Sonner />
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
