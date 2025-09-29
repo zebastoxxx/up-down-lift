@@ -355,6 +355,7 @@ export function PreoperationalHistory() {
             data={filteredRecords}
             searchKey="username"
             searchPlaceholder="Buscar registros..."
+            onView={handleView}
             mobileCardComponent={(record) => (
               <PreoperationalMobileCard
                 record={record}
