@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable, createSortableHeader } from "@/components/ui/data-table";
 import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
 import { PreoperationalMobileCard } from "@/components/preoperational/PreoperationalMobileCard";
+import { PreoperationalPhotos } from "@/components/preoperational/PreoperationalPhotos";
 import { DetailModal } from "@/components/ui/detail-modal";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -368,14 +369,17 @@ export function PreoperationalHistory() {
       </Card>
 
       {selectedRecord && (
-        <DetailModal
-          open={detailModalOpen}
-          onOpenChange={setDetailModalOpen}
-          title={`Preoperacional - ${selectedRecord.machines?.name || 'Sin máquina'}`}
-          data={selectedRecord}
-          fields={detailFields}
-          onSave={handleEdit}
-        />
+        <>
+          <DetailModal
+            open={detailModalOpen}
+            onOpenChange={setDetailModalOpen}
+            title={`Preoperacional - ${selectedRecord.machines?.name || 'Sin máquina'}`}
+            data={selectedRecord}
+            fields={detailFields}
+            onSave={handleEdit}
+          />
+          {detailModalOpen && <PreoperationalPhotos preoperationalId={selectedRecord.id} />}
+        </>
       )}
     </div>
   );
