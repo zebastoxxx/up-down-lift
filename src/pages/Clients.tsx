@@ -5,8 +5,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, createSortableHeader } from "@/components/ui/data-table";
-import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
-import { ClientMobileCard } from "@/components/clients/ClientMobileCard";
 import { Search, Plus, Filter, Download, Building2 } from "lucide-react";
 import { ClientForm } from "@/components/clients/ClientForm";
 import { ColumnDef } from "@tanstack/react-table";
@@ -249,91 +247,82 @@ export default function Clients() {
   ];
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl mobile-scroll overflow-x-hidden">
-      <div className="w-full min-w-0">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold truncate">Gestión de Clientes</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Administra tu cartera de clientes y proyectos
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Download className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Exportar</span>
-              <span className="sm:hidden">Export</span>
-            </Button>
-            <Button onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Nuevo Cliente</span>
-              <span className="sm:hidden">Nuevo</span>
-            </Button>
-          </div>
+    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold">Gestión de Clientes</h1>
+          <p className="text-muted-foreground">
+            Administra tu cartera de clientes y proyectos
+          </p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Exportar
+          </Button>
+          <Button onClick={() => setIsFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Cliente
+          </Button>
+        </div>
+      </div>
 
-        {/* Search */}
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Buscar por nombre, contacto..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full"
-                  />
-                </div>
+      {/* Search */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Buscar por nombre, contacto o email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-              <Button variant="outline" size="sm" className="w-full lg:w-auto">
-                <Filter className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Filtros Avanzados</span>
-                <span className="sm:hidden">Filtros</span>
-              </Button>
             </div>
-          </CardHeader>
-        </Card>
-
-        {/* Status Filter Buttons */}
-        <div className="w-full overflow-x-auto">
-          <div className="flex gap-2 min-w-max pb-2">
-            <Button
-              variant={statusFilter === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("all")}
-              className="whitespace-nowrap"
-            >
-              Todos ({clients.length})
-            </Button>
-            <Button
-              variant={statusFilter === "activo" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("activo")}
-              className="whitespace-nowrap"
-            >
-              Activos ({statusCounts.activo || 0})
-            </Button>
-            <Button
-              variant={statusFilter === "inactivo" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("inactivo")}
-              className="whitespace-nowrap"
-            >
-              Inactivos ({statusCounts.inactivo || 0})
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros Avanzados
             </Button>
           </div>
-        </div>
+        </CardHeader>
+      </Card>
 
-        {/* Data Display */}
-        <Card className="overflow-hidden">
-          <CardContent className="p-4 sm:p-6 overflow-hidden">
+      {/* Status Filter Buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={statusFilter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setStatusFilter("all")}
+        >
+          Todos ({clients.length})
+        </Button>
+        <Button
+          variant={statusFilter === "activo" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setStatusFilter("activo")}
+        >
+          Activos ({statusCounts.activo || 0})
+        </Button>
+        <Button
+          variant={statusFilter === "inactivo" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setStatusFilter("inactivo")}
+        >
+          Inactivos ({statusCounts.inactivo || 0})
+        </Button>
+      </div>
+
+      {/* Data Table */}
+      <Card>
+        <CardContent className="p-6">
           {isLoading ? (
             <div className="text-center py-8">Cargando clientes...</div>
           ) : (
-            <AdaptiveDataView
+            <DataTable
               columns={columns}
               data={filteredClients}
               searchKey="name"
@@ -341,31 +330,21 @@ export default function Clients() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onBulkDelete={handleBulkDelete}
-              mobileCardComponent={(client) => (
-                <ClientMobileCard
-                  client={client}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              )}
-              emptyMessage="No se encontraron clientes"
-              loading={isLoading}
             />
           )}
         </CardContent>
-        </Card>
+      </Card>
 
-        {/* Client Form Dialog */}
-        <ClientForm 
-          open={isFormOpen}
-          onOpenChange={(open) => {
-            setIsFormOpen(open);
-            if (!open) setSelectedClient(null);
-          }}
-          onClientCreated={handleClientCreated}
-          client={selectedClient}
-        />
-      </div>
+      {/* Client Form Dialog */}
+      <ClientForm 
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          setIsFormOpen(open);
+          if (!open) setSelectedClient(null);
+        }}
+        onClientCreated={handleClientCreated}
+        client={selectedClient}
+      />
     </div>
   );
 }

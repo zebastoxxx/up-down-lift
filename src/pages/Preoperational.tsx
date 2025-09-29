@@ -12,16 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Camera, Upload, Save, CheckCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PreoperationalHistory } from "@/components/preoperational/PreoperationalHistory";
 import { ProjectSelector } from "@/components/preoperational/ProjectSelector";
 import { MachineSelector } from "@/components/preoperational/MachineSelector";
 import { HourometerInput } from "@/components/preoperational/HourometerInput";
 import { FluidLevelSelector } from "@/components/preoperational/FluidLevelSelector";
 import { ChecklistSection } from "@/components/preoperational/ChecklistSection";
 import { PhotoCapture } from "@/components/preoperational/PhotoCapture";
-import { TireWearSelector } from "@/components/preoperational/TireWearSelector";
 
 interface Project {
   id: string;
@@ -41,25 +37,30 @@ interface Machine {
 }
 
 interface Photo {
+  type: string;
   file: File;
   preview: string;
-  category?: string;
+  caption?: string;
 }
 
 const CHECKLIST_ITEMS = [
+  { key: "aceite", label: "Revisión niveles de aceite" },
+  { key: "refrigerante", label: "Revisión niveles de refrigerante" },
+  { key: "combustible", label: "Nivel de combustible" },
   { key: "temperatura", label: "Temperatura del equipo" },
   { key: "alertas", label: "Revisión de alertas en tablero" },
   { key: "mangueras", label: "Revisión de mangueras" },
   { key: "fugas", label: "Revisión de fugas de aceite" },
+  { key: "procedimientos", label: "Procedimientos a inspeccionar en obra" },
   { key: "aire_acondicionado", label: "Funcionamiento aire acondicionado" },
   { key: "llantas_aire", label: "Llantas con suficiente aire" },
-  { key: "oruga_grasa", label: "(Si aplica) Oruga: grasa ok" }
+  { key: "oruga_grasa", label: "(Si aplica) Oruga: grasa ok" },
+  { key: "lubricacion", label: "General: equipos lubricados correctamente" }
 ];
 
 export default function Preoperational() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth(); // Use actual auth context
   
   // Step state
   const [currentStep, setCurrentStep] = useState(1);
@@ -77,7 +78,7 @@ export default function Preoperational() {
     coolant_level: "",
     hydraulic_level: "",
     greased: false,
-    tires_wear: "alto",
+    tires_wear: "",
     tires_punctured: false,
     tires_bearing_issue: false,
     tires_action: "none",
@@ -171,20 +172,16 @@ export default function Preoperational() {
     
     if (!selectedProject) errors.push("Debe seleccionar un proyecto");
     if (!selectedMachine) errors.push("Debe seleccionar una máquina");
-    if (!formData.hydraulic_level) errors.push("Debe indicar el nivel hidráulico");
     if (!formData.fuel_level) errors.push("Debe indicar el nivel de combustible");
     if (!formData.oil_level) errors.push("Debe indicar el nivel de aceite");
     if (!formData.coolant_level) errors.push("Debe indicar el nivel de refrigerante");
-    if (!formData.tires_wear) errors.push("Debe indicar el desgaste de llantas");
+    if (!formData.hydraulic_level) errors.push("Debe indicar el nivel hidráulico");
     if (formData.hours_worked > 24) errors.push("Las horas trabajadas no pueden exceder 24");
-    if (formData.hours_worked < 0) errors.push("Las horas trabajadas no pueden ser negativas");
     
     // Check if critical items need photos
     const needsPhoto = formData.tires_action !== "none" || 
                       formData.hoses_status !== "bueno" || 
-                      formData.lights_status !== "bueno" ||
-                      formData.tires_punctured ||
-                      formData.tires_bearing_issue;
+                      formData.lights_status !== "bueno";
     
     if (needsPhoto && photos.length === 0) {
       errors.push("Debe adjuntar al menos una foto cuando hay elementos que requieren reparación");
@@ -207,24 +204,13 @@ export default function Preoperational() {
     setIsSubmitting(true);
     
     try {
-      // Validate user is authenticated
-      if (!user || !user.id) {
-        toast({
-          title: "Error de autenticación",
-          description: "Debe estar autenticado para enviar el formulario",
-          variant: "destructive"
-        });
-        return;
-      }
-
       // Create preoperational record
       const { data, error } = await supabase
         .from('preoperational')
         .insert({
           machine_id: selectedMachine!.id,
           project_id: selectedProject!.id,
-          user_id: user.id,
-          username: user.full_name || user.username, // Save the user's name for display
+          user_id: (await supabase.auth.getUser()).data.user?.id,
           datetime: formData.datetime,
           ...formData,
           checklist: Object.entries(checklist).map(([key, value]) => ({
@@ -239,98 +225,11 @@ export default function Preoperational() {
 
       if (error) throw error;
 
-      // Upload photos if any
-      if (photos.length > 0) {
-        console.log('Uploading photos...');
-        const authToken = localStorage.getItem('auth_token');
-        
-        let uploadedCount = 0;
-        for (let i = 0; i < photos.length; i++) {
-          const photo = photos[i];
-          
-          try {
-            const formData = new FormData();
-            formData.append('file', photo.file);
-            formData.append('preoperational_id', data.id);
-            formData.append('photo_type', photo.category || 'general');
-            formData.append('index', (i + 1).toString());
-
-            const uploadResponse = await supabase.functions.invoke('upload-preop-photos', {
-              body: formData,
-              headers: {
-                'Authorization': `Bearer ${authToken}`
-              }
-            });
-
-            if (uploadResponse.error) {
-              console.error('Photo upload error:', uploadResponse.error);
-              toast({
-                title: "Error en foto",
-                description: `No se pudo subir la foto ${i + 1}`,
-                variant: "destructive"
-              });
-            } else {
-              uploadedCount++;
-              console.log(`Photo ${i + 1} uploaded successfully`);
-            }
-          } catch (photoError) {
-            console.error(`Error uploading photo ${i + 1}:`, photoError);
-            toast({
-              title: "Error en foto",
-              description: `Error al subir foto ${i + 1}`,
-              variant: "destructive"
-            });
-          }
-        }
-
-        if (uploadedCount > 0) {
-          toast({
-            title: "Fotos subidas",
-            description: `${uploadedCount} de ${photos.length} fotos subidas correctamente`,
-            variant: "default"
-          });
-        }
-      }
-
-      // Success message and cleanup
-      toast({
-        title: "Preoperacional enviado",
-        description: `Preoperacional completado exitosamente por ${user.full_name || user.username}`,
-        variant: "default"
-      });
-
-      // Reset form
-      setSelectedProject(null);
-      setSelectedMachine(null);
-      setCurrentStep(0);
-      setFormData({
-        datetime: new Date().toISOString(),
-        horometer_initial: 0,
-        horometer_final: 0,
-        hours_worked: 0,
-        fuel_level: '',
-        oil_level: '',
-        coolant_level: '',
-        hydraulic_level: '',
-        tires_wear: '',
-        tires_action: 'none',
-        tires_bearing_issue: false,
-        tires_punctured: false,
-        lights_status: 'bueno',
-        lights_note: '',
-        hoses_status: 'bueno',
-        hoses_note: '',
-        greased: false,
-        observations: ''
-      });
-      setChecklist({});
-      setPhotos([]);
-      
-      // Navigate back
+      // TODO: Upload photos to storage and create photo records
       
       toast({
         title: "Preoperacional enviado",
-        description: `Formulario enviado por ${user.full_name || user.username}. ${isOnline ? 'Guardado correctamente' : 'Se guardó localmente y se sincronizará cuando haya conexión'}`,
+        description: isOnline ? "El formulario se ha guardado correctamente" : "Se guardó localmente y se sincronizará cuando haya conexión",
         variant: "default"
       });
 
@@ -362,11 +261,6 @@ export default function Preoperational() {
               : "Formulario diario de inspección"
             }
           </p>
-          {user && (
-            <p className="text-xs text-muted-foreground mt-1">
-              👤 Operador: {user.full_name || user.username}
-            </p>
-          )}
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -491,54 +385,6 @@ export default function Preoperational() {
               </CardContent>
             </Card>
 
-            {/* Tires */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Inspección de Llantas</CardTitle>
-                <CardDescription>Verifique el estado de las llantas del equipo</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <TireWearSelector
-                  value={formData.tires_wear}
-                  onChange={(value) => handleFormChange('tires_wear', value)}
-                />
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="tires_punctured"
-                      checked={formData.tires_punctured}
-                      onCheckedChange={(checked) => handleFormChange('tires_punctured', checked)}
-                    />
-                    <Label htmlFor="tires_punctured">Llantas pinchadas</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="tires_bearing_issue"
-                      checked={formData.tires_bearing_issue}
-                      onCheckedChange={(checked) => handleFormChange('tires_bearing_issue', checked)}
-                    />
-                    <Label htmlFor="tires_bearing_issue">Problemas de rodamiento</Label>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Acción Requerida</Label>
-                  <Select value={formData.tires_action} onValueChange={(value) => handleFormChange('tires_action', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione acción" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sin acción</SelectItem>
-                      <SelectItem value="repair">Reparar</SelectItem>
-                      <SelectItem value="replace">Reemplazar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Greasing */}
             <Card>
               <CardHeader>
@@ -552,59 +398,6 @@ export default function Preoperational() {
                     onCheckedChange={(checked) => handleFormChange('greased', checked)}
                   />
                   <Label htmlFor="greased">Equipos engrasados correctamente</Label>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Lights and Hoses */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Luces y Mangueras</CardTitle>
-                <CardDescription>Estado de luces y sistema de mangueras</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Estado de Luces</Label>
-                  <Select value={formData.lights_status} onValueChange={(value) => handleFormChange('lights_status', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Estado de las luces" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bueno">Bueno</SelectItem>
-                      <SelectItem value="foco_danado">Foco dañado</SelectItem>
-                      <SelectItem value="farola_partida">Farola partida</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {formData.lights_status !== "bueno" && (
-                    <Textarea
-                      placeholder="Describa el problema con las luces..."
-                      value={formData.lights_note}
-                      onChange={(e) => handleFormChange('lights_note', e.target.value)}
-                      rows={2}
-                    />
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Estado de Mangueras</Label>
-                  <Select value={formData.hoses_status} onValueChange={(value) => handleFormChange('hoses_status', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Estado de las mangueras" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="bueno">Bueno</SelectItem>
-                      <SelectItem value="requiere_reparacion">Requiere reparación</SelectItem>
-                      <SelectItem value="reemplazo">Reemplazo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {formData.hoses_status !== "bueno" && (
-                    <Textarea
-                      placeholder="Describa el problema con las mangueras..."
-                      value={formData.hoses_note}
-                      onChange={(e) => handleFormChange('hoses_note', e.target.value)}
-                      rows={2}
-                    />
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -638,32 +431,6 @@ export default function Preoperational() {
               </CardContent>
             </Card>
 
-            {/* User Information Summary */}
-            <Card className="bg-primary/5 border-primary/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-primary">
-                  <CheckCircle className="h-5 w-5" />
-                  Información del Operador
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                    <span className="text-lg">👤</span>
-                  </div>
-                  <div>
-                    <p className="font-medium">{user?.full_name || user?.username}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Rol: {user?.role === 'operario' ? 'Operario' : user?.role === 'supervisor' ? 'Supervisor' : 'Administrador'}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-3">
-                  Al enviar este formulario, se registrará su firma digital con fecha y hora.
-                </p>
-              </CardContent>
-            </Card>
-
             {/* Submit Button */}
             <div className="pb-6">
               <Button
@@ -691,58 +458,11 @@ export default function Preoperational() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Preoperacional</h1>
-        <p className="text-muted-foreground">
-          Realiza inspecciones preoperacionales y consulta el historial
-          </p>
-          {user && (
-            <p className="text-xs text-muted-foreground mt-1">
-              👤 Operador: {user.full_name || user.username}
-            </p>
-          )}
-        </div>
-
-      <Tabs defaultValue="form" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="form">Nueva Inspección</TabsTrigger>
-          <TabsTrigger value="history">Historial</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="form" className="space-y-6">
-          <div className="min-h-screen bg-background">
-            {renderHeader()}
-            <div className="max-w-2xl mx-auto">
-              {renderStepContent()}
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
-          <PreoperationalHistory />
-        </TabsContent>
-      </Tabs>
+    <div className="min-h-screen bg-background">
+      {renderHeader()}
+      <div className="max-w-2xl mx-auto">
+        {renderStepContent()}
+      </div>
     </div>
   );
-
-  // Show authentication required message if user is not logged in
-  if (!user) {
-    return (
-      <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Autenticación Requerida</h2>
-            <p className="text-muted-foreground mb-4">
-              Debe iniciar sesión para completar un formulario preoperacional.
-            </p>
-            <Button onClick={() => navigate('/auth')}>
-              Iniciar Sesión
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 }

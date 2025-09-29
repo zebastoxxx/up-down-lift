@@ -44,6 +44,3 @@ port = 54329
 
 [functions.authenticate-user]
 verify_jwt = false
-
-[functions.upload-preop-photos]
-verify_jwt = false

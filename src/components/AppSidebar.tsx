@@ -22,11 +22,10 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
-  // Temporarily disable hooks
-  const open = true;
-  const user = null;
-  const hasPermission = (role: string) => true;
-  const currentPath = "/";
+  const { open } = useSidebar();
+  const { user, hasPermission } = useAuth();
+  const location = useLocation();
+  const currentPath = location.pathname;
 
   const isActive = (path: string) => currentPath === path;
   const getNavClasses = ({ isActive }: { isActive: boolean }) =>
@@ -38,8 +37,13 @@ export function AppSidebar() {
   const getNavigationItems = () => {
     const items = [];
     
-    // Preoperational - available for all authenticated users (now home page)
-    items.push({ title: "Preoperacional", url: "/", icon: ClipboardCheck });
+    // Dashboard - only for administrators
+    if (hasPermission("administrador")) {
+      items.push({ title: "Dashboard", url: "/", icon: BarChart3 });
+    }
+    
+    // Preoperational - available for all authenticated users
+    items.push({ title: "Preoperacional", url: "/preoperational", icon: ClipboardCheck });
     
     // Machines, Clients, Projects - for supervisors and administrators
     if (hasPermission("supervisor")) {

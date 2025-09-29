@@ -13,14 +13,6 @@ export default {
       },
     },
     extend: {
-      screens: {
-        'touch': { 'raw': '(hover: none)' },
-        'no-touch': { 'raw': '(hover: hover)' },
-      },
-      spacing: {
-        'touch': 'var(--touch-target-min)',
-        'mobile': 'var(--mobile-padding)',
-      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
