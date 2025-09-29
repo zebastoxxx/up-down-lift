@@ -1,11 +1,7 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PWAInstallBanner } from "@/components/ui/pwa-install-banner";
 import { LogOut } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { cn } from "@/lib/utils";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -41,9 +37,6 @@ export default function Layout({
             </Button>
           </div>
         </header>
-
-        {/* PWA Install Banner */}
-        <PWAInstallBanner />
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
