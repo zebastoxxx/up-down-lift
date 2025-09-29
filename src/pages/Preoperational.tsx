@@ -22,6 +22,7 @@ import { FluidLevelSelector } from "@/components/preoperational/FluidLevelSelect
 import { ChecklistSection } from "@/components/preoperational/ChecklistSection";
 import { PhotoCapture } from "@/components/preoperational/PhotoCapture";
 import { TireWearSelector } from "@/components/preoperational/TireWearSelector";
+import { PreoperationalConfirmationModal } from "@/components/preoperational/PreoperationalConfirmationModal";
 
 interface Project {
   id: string;
@@ -92,6 +93,7 @@ export default function Preoperational() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   // Initialize checklist
   useEffect(() => {
@@ -193,7 +195,7 @@ export default function Preoperational() {
     return errors;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmitForm = () => {
     const errors = validateForm();
     if (errors.length > 0) {
       toast({
@@ -204,6 +206,11 @@ export default function Preoperational() {
       return;
     }
 
+    // Show confirmation modal instead of submitting directly
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmSubmit = async () => {
     setIsSubmitting(true);
     
     try {
@@ -326,7 +333,8 @@ export default function Preoperational() {
       setChecklist({});
       setPhotos([]);
       
-      // Navigate back
+      // Close modal and navigate to history
+      setShowConfirmationModal(false);
       
       toast({
         title: "Preoperacional enviado",
@@ -334,7 +342,8 @@ export default function Preoperational() {
         variant: "default"
       });
 
-      navigate("/machines");
+      // Navigate to preoperational history tab
+      navigate("/preoperational", { state: { activeTab: "history" } });
       
     } catch (error) {
       console.error('Error submitting preoperational:', error);
@@ -667,7 +676,7 @@ export default function Preoperational() {
             {/* Submit Button */}
             <div className="pb-6">
               <Button
-                onClick={handleSubmit}
+                onClick={handleSubmitForm}
                 disabled={isSubmitting}
                 className="w-full h-12 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
                 size="lg"
@@ -723,6 +732,22 @@ export default function Preoperational() {
           <PreoperationalHistory />
         </TabsContent>
       </Tabs>
+
+      {/* Confirmation Modal */}
+      {selectedProject && selectedMachine && (
+        <PreoperationalConfirmationModal
+          open={showConfirmationModal}
+          onOpenChange={setShowConfirmationModal}
+          onConfirm={handleConfirmSubmit}
+          project={selectedProject}
+          machine={selectedMachine}
+          formData={formData}
+          checklist={checklist}
+          photos={photos}
+          user={user}
+          isSubmitting={isSubmitting}
+        />
+      )}
     </div>
   );
 
