@@ -4,8 +4,6 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import Machines from "./pages/Machines";
 import Clients from "./pages/Clients";
@@ -91,8 +89,6 @@ const App = () => (
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <Toaster />
-        <Sonner />
         </BrowserRouter>
       </AuthProvider>
     </ThemeProvider>
