@@ -1,12 +1,14 @@
 import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, Upload, X, Image as ImageIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Camera, Upload, X, Image as ImageIcon, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Photo {
   file: File;
   preview: string;
+  category?: string;
 }
 
 interface PhotoCaptureProps {
@@ -15,8 +17,18 @@ interface PhotoCaptureProps {
   onPhotoRemove: (index: number) => void;
 }
 
+const PHOTO_CATEGORIES = [
+  { value: "general", label: "General" },
+  { value: "problema_llantas", label: "Problema de Llantas" },
+  { value: "problema_luces", label: "Problema de Luces" },
+  { value: "problema_mangueras", label: "Problema de Mangueras" },
+  { value: "nivel_fluidos", label: "Nivel de Fluidos" },
+  { value: "mantenimiento", label: "Mantenimiento" },
+];
+
 export function PhotoCapture({ photos, onPhotoAdd, onPhotoRemove }: PhotoCaptureProps) {
   const { toast } = useToast();
+  const [selectedCategory, setSelectedCategory] = useState<string>("general");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,7 +122,8 @@ export function PhotoCapture({ photos, onPhotoAdd, onPhotoRemove }: PhotoCapture
         
         const photo: Photo = {
           file: compressedFile,
-          preview
+          preview,
+          category: selectedCategory
         };
         
         onPhotoAdd(photo);
@@ -181,6 +194,26 @@ export function PhotoCapture({ photos, onPhotoAdd, onPhotoRemove }: PhotoCapture
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Category Selection */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <Tag className="h-4 w-4" />
+            Categoría de Foto
+          </label>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {PHOTO_CATEGORIES.map((category) => (
+                <SelectItem key={category.value} value={category.value}>
+                  {category.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Capture Buttons */}
         <div className="grid grid-cols-2 gap-3">
           <Button
@@ -232,6 +265,11 @@ export function PhotoCapture({ photos, onPhotoAdd, onPhotoRemove }: PhotoCapture
                       alt={`Foto ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
+                  </div>
+                  
+                  {/* Category Badge */}
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 text-white text-xs rounded">
+                    {PHOTO_CATEGORIES.find(cat => cat.value === photo.category)?.label || 'General'}
                   </div>
                   
                   {/* Remove Button */}
