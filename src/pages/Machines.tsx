@@ -5,21 +5,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DataTable, createSortableHeader } from "@/components/ui/data-table";
+import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
+import { MachineMobileCard } from "@/components/machines/MachineMobileCard";
 import { Search, Plus, Filter, Download } from "lucide-react";
 import { ColumnDef } from "@tanstack/react-table";
 import { toast } from "@/hooks/use-toast";
 import { MachineForm } from "@/components/machines/MachineForm";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PreoperationalHistory } from "@/components/preoperational/PreoperationalHistory";
 
 interface Machine {
   id: string;
@@ -42,6 +46,22 @@ export default function Machines() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+
+  // Handlers for machine actions
+  const handleViewDetails = (machine: Machine) => {
+    console.log('View details for machine:', machine);
+    // TODO: Implement machine details modal
+  };
+
+  const handleStartInspection = (machine: Machine) => {
+    console.log('Start inspection for machine:', machine);
+    // TODO: Navigate to preoperational form with selected machine
+  };
+
+  const handleEdit = (machine: Machine) => {
+    setSelectedMachine(machine);
+    setIsFormOpen(true);
+  };
 
   useEffect(() => {
     fetchMachines();
@@ -66,11 +86,6 @@ export default function Machines() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleEdit = (machine: Machine) => {
-    setSelectedMachine(machine);
-    setIsFormOpen(true);
   };
 
   const handleDelete = async (machine: Machine) => {
@@ -148,7 +163,7 @@ export default function Machines() {
     const statusMap = {
       'operativo': { label: 'Operativo', variant: 'default' as const },
       'mantenimiento': { label: 'Mantenimiento', variant: 'destructive' as const },
-      'fuera_de_servicio': { label: 'Fuera de Servicio', variant: 'outline' as const }
+      'fuera_de_servicio': { label: 'Fuera de Servicio', variant: 'secondary' as const }
     };
     
     const config = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'outline' as const };
@@ -164,6 +179,13 @@ export default function Machines() {
       ),
     },
     {
+      accessorKey: "brand",
+      header: "Marca",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.getValue("brand") || "-"}</div>
+      ),
+    },
+    {
       accessorKey: "model",
       header: "Modelo",
       cell: ({ row }) => (
@@ -171,10 +193,10 @@ export default function Machines() {
       ),
     },
     {
-      accessorKey: "brand",
-      header: "Marca",
+      accessorKey: "serial_number",
+      header: "Número de Serie",
       cell: ({ row }) => (
-        <div className="text-sm">{row.getValue("brand") || "-"}</div>
+        <div className="text-sm">{row.getValue("serial_number") || "-"}</div>
       ),
     },
     {
@@ -190,33 +212,13 @@ export default function Machines() {
       ),
     },
     {
-      accessorKey: "current_hours",
-      header: createSortableHeader("Horómetro"),
-      cell: ({ row }) => {
-        const hours = row.getValue("current_hours") as number;
-        return <div className="text-sm">{hours ? `${hours}h` : "-"}</div>;
-      },
-    },
-    {
-      accessorKey: "last_preop_date",
-      header: createSortableHeader("Último Preoperacional"),
-      cell: ({ row }) => {
-        const date = row.getValue("last_preop_date") as string;
-        return (
-          <div className="text-sm">
-            {date ? new Date(date).toLocaleDateString('es-ES') : "No registrado"}
-          </div>
-        );
-      },
-    },
-    {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => (
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+          <Button 
+            variant="outline" 
+            size="sm" 
             onClick={() => handleEdit(row.original)}
           >
             Editar
@@ -231,7 +233,7 @@ export default function Machines() {
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Esta acción no se puede deshacer. Esto eliminará permanentemente la máquina de la base de datos.
+                  Esta acción no se puede deshacer. Esto eliminará permanentemente la máquina.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -249,106 +251,129 @@ export default function Machines() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Gestión de Máquinas</h1>
-          <p className="text-muted-foreground">
-            Administra y monitorea toda tu flota de equipos
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar
-          </Button>
-          <Button onClick={() => setIsFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Registrar Máquina
-          </Button>
-        </div>
-      </div>
-
-      {/* Search */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Buscar por nombre, modelo, marca o ubicación..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+      <Tabs defaultValue="machines" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="machines">Máquinas</TabsTrigger>
+          <TabsTrigger value="history">Historial Preoperacional</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="machines" className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold">Gestión de Máquinas</h1>
+              <p className="text-muted-foreground">
+                Administra tu flota de maquinaria y equipos
+              </p>
             </div>
-            <Button variant="outline" size="sm">
-              <Filter className="h-4 w-4 mr-2" />
-              Filtros Avanzados
+            <div className="flex gap-2">
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+              <Button onClick={() => setIsFormOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Máquina
+              </Button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col lg:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Buscar por nombre, marca, modelo..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filtros Avanzados
+                </Button>
+              </div>
+            </CardHeader>
+          </Card>
+
+          {/* Status Filter Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={statusFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+            >
+              Todas ({machines.length})
+            </Button>
+            <Button
+              variant={statusFilter === "operativo" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("operativo")}
+            >
+              Operativas ({statusCounts.operativo || 0})
+            </Button>
+            <Button
+              variant={statusFilter === "mantenimiento" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("mantenimiento")}
+            >
+              Mantenimiento ({statusCounts.mantenimiento || 0})
+            </Button>
+            <Button
+              variant={statusFilter === "fuera_de_servicio" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("fuera_de_servicio")}
+            >
+              Fuera de Servicio ({statusCounts.fuera_de_servicio || 0})
             </Button>
           </div>
-        </CardHeader>
-      </Card>
 
-      {/* Status Filter Buttons */}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={statusFilter === "all" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStatusFilter("all")}
-        >
-          Todas ({machines.length})
-        </Button>
-        <Button
-          variant={statusFilter === "operativo" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStatusFilter("operativo")}
-        >
-          Operativas ({statusCounts.operativo || 0})
-        </Button>
-        <Button
-          variant={statusFilter === "mantenimiento" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStatusFilter("mantenimiento")}
-        >
-          Mantenimiento ({statusCounts.mantenimiento || 0})
-        </Button>
-        <Button
-          variant={statusFilter === "fuera_de_servicio" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setStatusFilter("fuera_de_servicio")}
-        >
-          Fuera de Servicio ({statusCounts.fuera_de_servicio || 0})
-        </Button>
-      </div>
+          {/* Data Display */}
+          <Card>
+            <CardContent className="p-6">
+              {isLoading ? (
+                <div className="text-center py-8">Cargando máquinas...</div>
+              ) : (
+                <AdaptiveDataView
+                  columns={columns}
+                  data={filteredMachines}
+                  searchKey="name"
+                  searchPlaceholder="Buscar máquinas..."
+                  onBulkDelete={handleBulkDelete}
+                  mobileCardComponent={(machine) => (
+                    <MachineMobileCard
+                      machine={machine}
+                      onViewDetails={handleViewDetails}
+                      onStartInspection={handleStartInspection}
+                    />
+                  )}
+                  emptyMessage="No se encontraron máquinas"
+                  loading={isLoading}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Data Table */}
-      <Card>
-        <CardContent className="p-6">
-          {isLoading ? (
-            <div className="text-center py-8">Cargando máquinas...</div>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={filteredMachines}
-              searchKey="name"
-              searchPlaceholder="Buscar máquinas..."
-              onBulkDelete={handleBulkDelete}
-            />
-          )}
-        </CardContent>
-      </Card>
+        <TabsContent value="history">
+          <PreoperationalHistory />
+        </TabsContent>
+      </Tabs>
 
-      <MachineForm
-        isOpen={isFormOpen}
+      {/* Machine Form Dialog */}
+      <MachineForm 
+        isOpen={isFormOpen} 
         onClose={() => {
           setIsFormOpen(false);
           setSelectedMachine(null);
-        }}
-        onMachineCreated={handleMachineCreated}
-        machine={selectedMachine}
+        }} 
+        onMachineCreated={handleMachineCreated} 
+        machine={selectedMachine} 
       />
     </div>
   );
