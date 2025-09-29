@@ -80,6 +80,7 @@ export function DataTable<TData, TValue>({
             checked={table.getIsAllPageRowsSelected()}
             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
             aria-label="Seleccionar todo"
+            onClick={(e) => e.stopPropagation()}
           />
         ),
         cell: ({ row }) => (
@@ -87,6 +88,7 @@ export function DataTable<TData, TValue>({
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(!!value)}
             aria-label="Seleccionar fila"
+            onClick={(e) => e.stopPropagation()}
           />
         ),
         enableSorting: false,
