@@ -67,8 +67,27 @@ serve(async (req) => {
       );
     }
 
-    // Verify password (for demo, compare directly - in production use bcrypt)
-    const isValidPassword = password === 'admin123' && username === 'admin';
+    // Verify password against stored password_hash
+    let isValidPassword = false;
+    
+    try {
+      // First try direct comparison (for plaintext passwords)
+      if (user.password_hash === password) {
+        isValidPassword = true;
+      } else {
+        // Try bcrypt comparison (for hashed passwords)
+        try {
+          isValidPassword = await bcrypt.compare(password, user.password_hash);
+        } catch (bcryptError) {
+          // If bcrypt fails, password_hash is likely plaintext, already checked above
+          console.log('Bcrypt comparison failed, assuming plaintext password');
+          isValidPassword = false;
+        }
+      }
+    } catch (error) {
+      console.log('Password verification error:', error);
+      isValidPassword = false;
+    }
     
     if (!isValidPassword) {
       console.log('Invalid password for user:', username);
