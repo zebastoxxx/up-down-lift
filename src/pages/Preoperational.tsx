@@ -43,7 +43,6 @@ interface Machine {
 interface Photo {
   file: File;
   preview: string;
-  category?: string;
 }
 
 const CHECKLIST_ITEMS = [
@@ -239,94 +238,7 @@ export default function Preoperational() {
 
       if (error) throw error;
 
-      // Upload photos if any
-      if (photos.length > 0) {
-        console.log('Uploading photos...');
-        const authToken = localStorage.getItem('auth_token');
-        
-        let uploadedCount = 0;
-        for (let i = 0; i < photos.length; i++) {
-          const photo = photos[i];
-          
-          try {
-            const formData = new FormData();
-            formData.append('file', photo.file);
-            formData.append('preoperational_id', data.id);
-            formData.append('photo_type', photo.category || 'general');
-            formData.append('index', (i + 1).toString());
-
-            const uploadResponse = await supabase.functions.invoke('upload-preop-photos', {
-              body: formData,
-              headers: {
-                'Authorization': `Bearer ${authToken}`
-              }
-            });
-
-            if (uploadResponse.error) {
-              console.error('Photo upload error:', uploadResponse.error);
-              toast({
-                title: "Error en foto",
-                description: `No se pudo subir la foto ${i + 1}`,
-                variant: "destructive"
-              });
-            } else {
-              uploadedCount++;
-              console.log(`Photo ${i + 1} uploaded successfully`);
-            }
-          } catch (photoError) {
-            console.error(`Error uploading photo ${i + 1}:`, photoError);
-            toast({
-              title: "Error en foto",
-              description: `Error al subir foto ${i + 1}`,
-              variant: "destructive"
-            });
-          }
-        }
-
-        if (uploadedCount > 0) {
-          toast({
-            title: "Fotos subidas",
-            description: `${uploadedCount} de ${photos.length} fotos subidas correctamente`,
-            variant: "default"
-          });
-        }
-      }
-
-      // Success message and cleanup
-      toast({
-        title: "Preoperacional enviado",
-        description: `Preoperacional completado exitosamente por ${user.full_name || user.username}`,
-        variant: "default"
-      });
-
-      // Reset form
-      setSelectedProject(null);
-      setSelectedMachine(null);
-      setCurrentStep(0);
-      setFormData({
-        datetime: new Date().toISOString(),
-        horometer_initial: 0,
-        horometer_final: 0,
-        hours_worked: 0,
-        fuel_level: '',
-        oil_level: '',
-        coolant_level: '',
-        hydraulic_level: '',
-        tires_wear: '',
-        tires_action: 'none',
-        tires_bearing_issue: false,
-        tires_punctured: false,
-        lights_status: 'bueno',
-        lights_note: '',
-        hoses_status: 'bueno',
-        hoses_note: '',
-        greased: false,
-        observations: ''
-      });
-      setChecklist({});
-      setPhotos([]);
-      
-      // Navigate back
+      // TODO: Upload photos to storage and create photo records
       
       toast({
         title: "Preoperacional enviado",
