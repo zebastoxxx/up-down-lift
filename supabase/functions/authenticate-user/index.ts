@@ -48,11 +48,11 @@ serve(async (req) => {
       );
     }
 
-    // Find user by username
+    // Find user by username (case-insensitive)
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('*')
-      .eq('username', username)
+      .ilike('username', username)
       .eq('status', 'activo')
       .single();
 
