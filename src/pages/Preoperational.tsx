@@ -368,8 +368,7 @@ export default function Preoperational() {
       // Upload photos if any
       if (photos.length > 0) {
         console.log('Uploading photos...');
-        const { data: { session } } = await supabase.auth.getSession();
-        const authToken = session?.access_token;
+        const authToken = localStorage.getItem('auth_token');
         
         if (!authToken) {
           toast({
