@@ -303,28 +303,6 @@ export default function Settings() {
       accessorKey: "created_at",
       cell: ({ row }: any) => new Date(row.original.created_at).toLocaleDateString(),
     },
-    {
-      id: "actions",
-      header: "Acciones",
-      cell: ({ row }: any) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleViewUser(row.original)}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => handleDeleteUser(row.original)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
   ];
 
   const userDetailFields = [
@@ -483,6 +461,8 @@ export default function Settings() {
                   searchKey="username"
                   searchPlaceholder="Buscar usuarios..."
                   onView={handleViewUser}
+                  onEdit={handleViewUser}
+                  onDelete={handleDeleteUser}
                   mobileCardComponent={(user) => (
                     <UserMobileCard
                       user={user}
