@@ -12,7 +12,7 @@ import { DataTable, createSortableHeader } from "@/components/ui/data-table";
 import { AdaptiveDataView } from "@/components/ui/adaptive-data-view";
 import { UserMobileCard } from "@/components/users/UserMobileCard";
 import { DetailModal } from "@/components/ui/detail-modal";
-import { Database, UserPlus, Users, Save } from "lucide-react";
+import { Database, UserPlus, Users, Save, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,7 +48,7 @@ export default function Settings() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
-  const { hasPermission } = useAuth();
+  const { hasPermission, user: currentUser } = useAuth();
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -160,6 +160,15 @@ export default function Settings() {
     if (!selectedUser) return;
 
     try {
+      // Handle password update
+      if (updatedData.password_hash && updatedData.password_hash !== '******') {
+        // Only update if it's not the placeholder
+        updatedData.password_hash = updatedData.password_hash;
+      } else {
+        // Don't update password if it's the placeholder
+        delete updatedData.password_hash;
+      }
+
       // Normalize username if it's being updated
       if (updatedData.username) {
         updatedData.username = updatedData.username.trim().toLowerCase().replace(/\s+/g, '_');
@@ -182,11 +191,8 @@ export default function Settings() {
         description: "El usuario ha sido actualizado exitosamente",
       });
 
-      // Wait a bit before closing modal to ensure the data is updated
+      // Reload users to refresh the modal
       await loadUsers();
-      setTimeout(() => {
-        setDetailModalOpen(false);
-      }, 100);
     } catch (error) {
       console.error('Error updating user:', error);
       toast({
@@ -198,6 +204,23 @@ export default function Settings() {
   };
 
   const handleDeleteUser = async (user: User) => {
+    // Prevent admin from deleting themselves
+    if (currentUser && user.id === currentUser.id) {
+      toast({
+        title: "Acción no permitida",
+        description: "No puedes eliminar tu propio usuario",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Confirm deletion
+    const confirmed = window.confirm(
+      `¿Estás seguro de que deseas eliminar al usuario "${user.full_name || user.username}"?`
+    );
+    
+    if (!confirmed) return;
+
     try {
       const { error } = await supabase
         .from('users')
@@ -280,22 +303,45 @@ export default function Settings() {
       accessorKey: "created_at",
       cell: ({ row }: any) => new Date(row.original.created_at).toLocaleDateString(),
     },
+    {
+      id: "actions",
+      header: "Acciones",
+      cell: ({ row }: any) => (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewUser(row.original)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => handleDeleteUser(row.original)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
   ];
 
   const userDetailFields = [
     { key: 'username', label: 'Usuario', type: 'text' as const, editable: true, section: 'general' },
     { key: 'full_name', label: 'Nombre Completo', type: 'text' as const, editable: true, section: 'general' },
-    { key: 'password_hash', label: 'Contraseña', type: 'text' as const, editable: true, section: 'general' },
+    { key: 'password_hash', label: 'Contraseña', type: 'text' as const, editable: true, section: 'general', format: () => '******' },
     { key: 'role', label: 'Rol', type: 'select' as const, options: [
-      { value: 'operario', label: 'Operario' },
+      { value: 'administrador', label: 'Administrador' },
       { value: 'supervisor', label: 'Supervisor' },
-      { value: 'administrador', label: 'Administrador' }
-    ], editable: true, section: 'general' },
+      { value: 'operario', label: 'Operario' }
+    ], editable: true, section: 'general', format: (value: string) => value.charAt(0).toUpperCase() + value.slice(1) },
     { key: 'status', label: 'Estado', type: 'select' as const, options: [
       { value: 'activo', label: 'Activo' },
       { value: 'inactivo', label: 'Inactivo' }
-    ], editable: true, section: 'general' },
-    { key: 'created_at', label: 'Fecha de Creación', type: 'text' as const, format: (value: string) => new Date(value).toLocaleString(), section: 'informacion' },
+    ], editable: true, section: 'general', format: (value: string) => value.charAt(0).toUpperCase() + value.slice(1) },
+    { key: 'created_at', label: 'Fecha de Creación', type: 'date' as const, editable: false, section: 'informacion', format: (value: string) => new Date(value).toLocaleString('es-CO') },
+    { key: 'updated_at', label: 'Última Modificación', type: 'date' as const, editable: false, section: 'informacion', format: (value: string) => new Date(value).toLocaleString('es-CO') }
   ];
 
   if (!hasPermission("administrador")) {
