@@ -161,46 +161,48 @@ export default function WarehouseInspection() {
 
     try {
       // Save inspection record
+      const inspectionData = {
+        machine_id: selectedMachine.id,
+        user_id: user.id,
+        username: user.username || user.full_name || "Usuario",
+        inspection_type: inspectionType,
+        horometer_reading: parseFloat(horometerReading),
+        fuel_level: fuelLevel,
+        oil_level: oilLevel,
+        coolant_level: coolantLevel,
+        hydraulic_level: hydraulicLevel,
+        tire_condition: tireCondition,
+        tire_pressure_ok: tirePressureOk,
+        body_condition: bodyCondition,
+        lights_working: lightsWorking,
+        lights_note: lightsNote,
+        horn_working: hornWorking,
+        windows_intact: windowsIntact,
+        windows_note: windowsNote,
+        mirrors_intact: mirrorsIntact,
+        seat_condition: seatCondition,
+        cabin_cleanliness: cabinCleanliness,
+        leaks_detected: leaksDetected,
+        leaks_location: leaksLocation,
+        hoses_condition: hosesCondition,
+        battery_condition: batteryCondition,
+        tools_complete: toolsComplete,
+        tools_missing: toolsMissing,
+        fire_extinguisher: fireExtinguisher,
+        first_aid_kit: firstAidKit,
+        safety_cones: safetyCones,
+        reflective_triangles: reflectiveTriangles,
+        documents_complete: documentsComplete,
+        documents_missing: documentsMissing,
+        overall_condition: overallCondition,
+        observations: observations,
+        checklist: checklist as any,
+        photos_count: photos.length
+      };
+
       const { data: inspection, error: inspectionError } = await supabase
         .from("warehouse_inspections")
-        .insert({
-          machine_id: selectedMachine.id,
-          user_id: user.id,
-          username: user.username || user.full_name || "Usuario",
-          inspection_type: inspectionType,
-          horometer_reading: parseFloat(horometerReading),
-          fuel_level: fuelLevel,
-          oil_level: oilLevel,
-          coolant_level: coolantLevel,
-          hydraulic_level: hydraulicLevel,
-          tire_condition: tireCondition,
-          tire_pressure_ok: tirePressureOk,
-          body_condition: bodyCondition,
-          lights_working: lightsWorking,
-          lights_note: lightsNote,
-          horn_working: hornWorking,
-          windows_intact: windowsIntact,
-          windows_note: windowsNote,
-          mirrors_intact: mirrorsIntact,
-          seat_condition: seatCondition,
-          cabin_cleanliness: cabinCleanliness,
-          leaks_detected: leaksDetected,
-          leaks_location: leaksLocation,
-          hoses_condition: hosesCondition,
-          battery_condition: batteryCondition,
-          tools_complete: toolsComplete,
-          tools_missing: toolsMissing,
-          fire_extinguisher: fireExtinguisher,
-          first_aid_kit: firstAidKit,
-          safety_cones: safetyCones,
-          reflective_triangles: reflectiveTriangles,
-          documents_complete: documentsComplete,
-          documents_missing: documentsMissing,
-          overall_condition: overallCondition,
-          observations: observations,
-          checklist: checklist,
-          photos_count: photos.length
-        })
+        .insert([inspectionData])
         .select()
         .single();
 
