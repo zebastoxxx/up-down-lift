@@ -19,7 +19,7 @@ interface MachineCardProps {
     name: string;
     model: string;
     serialNumber: string;
-    status: "operational" | "maintenance" | "offline" | "inspection";
+    status: "activo" | "en_mantenimiento" | "fuera_servicio" | "disponible";
     location: string;
     project?: string;
     operator?: string;
