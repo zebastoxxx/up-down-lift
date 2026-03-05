@@ -143,7 +143,7 @@ export function DataTable<TData, TValue>({
   const selectedRows = table.getFilteredSelectedRowModel().rows;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center space-x-2">
@@ -154,7 +154,7 @@ export function DataTable<TData, TValue>({
                 placeholder={searchPlaceholder}
                 value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
                 onChange={(event) => table.getColumn(searchKey)?.setFilterValue(event.target.value)}
-                className="max-w-xs h-9 pl-8 text-sm"
+                className="max-w-xs h-8 pl-8 text-sm"
               />
             </div>
           )}
@@ -195,13 +195,13 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border bg-card shadow-card overflow-hidden">
+      <div className="rounded-md border bg-card overflow-hidden">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
+                  <TableHead key={header.id} className="h-10 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -214,11 +214,11 @@ export function DataTable<TData, TValue>({
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
-                  className={onView ? "cursor-pointer" : ""}
+                  className={`h-10 ${onView ? "cursor-pointer" : ""}`}
                   onClick={() => onView && onView(row.original)}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell key={cell.id} className="py-1.5">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -226,7 +226,7 @@ export function DataTable<TData, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={tableColumns.length} className="h-20 text-center text-muted-foreground">
+                <TableCell colSpan={tableColumns.length} className="h-16 text-center text-muted-foreground">
                   No hay resultados.
                 </TableCell>
               </TableRow>
@@ -236,7 +236,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between py-2">
+      <div className="flex items-center justify-between py-1">
         <div className="flex-1 text-xs text-muted-foreground">
           {enableMultiSelect && (
             <>
@@ -264,7 +264,7 @@ export function createSortableHeader(title: string) {
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="h-auto p-0 font-bold hover:bg-transparent text-[11px] uppercase tracking-wider"
+        className="h-auto p-0 font-semibold hover:bg-transparent text-[11px] uppercase tracking-wider"
       >
         {title}
         <ArrowUpDown className="ml-1.5 h-3 w-3" />

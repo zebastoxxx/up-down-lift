@@ -1,21 +1,20 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Up &amp; Down Solar — Fleet Management</title>
     <meta name="description" content="Heavy machinery fleet management system for rental equipment, inspections, and maintenance tracking. Powered by God.">
     <meta name="author" content="Up & Down Solar" />
-    <meta name="keywords" content="fleet management, equipment rental, heavy machinery, inspections, maintenance, PWA">
     
-    <!-- Google Fonts: Barlow Condensed + DM Sans -->
+    <!-- Google Fonts: Playfair Display + Instrument Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- PWA Configuration -->
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#D4881E">
+    <meta name="theme-color" content="#1B5E37">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -23,33 +22,21 @@
     <link rel="apple-touch-icon" href="/icons/icon-180x180.png">
 
     <meta property="og:type" content="website" />
-    
-    
     <meta name="twitter:card" content="summary_large_image" />
-    
-    
     <meta property="og:title" content="Up &amp; Down Solar — Fleet Management">
-  <meta name="twitter:title" content="Up &amp; Down Solar — Fleet Management">
-  <meta property="og:description" content="Heavy machinery fleet management system for rental equipment, inspections, and maintenance tracking. Powered by God.">
-  <meta name="twitter:description" content="Heavy machinery fleet management system for rental equipment, inspections, and maintenance tracking. Powered by God.">
-  <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/03482315-aae5-4f73-92c6-c8be4d134f44?Expires=1772752559&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=jsroR6z0LzOmqstnNh%2FdQrpruBzEagU6C21iqXto%2B64UQSfIZGQj6v1gScCEz0QlyLdRV7JYUKoPnZJERckWRXb1xs%2FQ4nyhUu7WPR%2F4clWCbb3zY3ib741Wr4WfZBIqUFvgu5VgD29wdIkAb3JuF5jDT%2BUITjROc7P1BLyVPj7HbjRKCCpdymlbMvGjSaPZWx6TqNWDXiV9GgSJJGKyMzHMBKnJtL3Jxv3010BGVuRz8S8OZ0MaOUQ%2B6XK1%2BlWgQyKWpptuiqMO8r6epQWjxu8QEcXGTIG6M4NizwaOaGzNO0gf6xbrm9fOcdgr7UY5bIPYvKaYrHebVDLjPE1DWg%3D%3D">
-  <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/03482315-aae5-4f73-92c6-c8be4d134f44?Expires=1772752559&amp;GoogleAccessId=go-api-on-aws%40gpt-engineer-390607.iam.gserviceaccount.com&amp;Signature=jsroR6z0LzOmqstnNh%2FdQrpruBzEagU6C21iqXto%2B64UQSfIZGQj6v1gScCEz0QlyLdRV7JYUKoPnZJERckWRXb1xs%2FQ4nyhUu7WPR%2F4clWCbb3zY3ib741Wr4WfZBIqUFvgu5VgD29wdIkAb3JuF5jDT%2BUITjROc7P1BLyVPj7HbjRKCCpdymlbMvGjSaPZWx6TqNWDXiV9GgSJJGKyMzHMBKnJtL3Jxv3010BGVuRz8S8OZ0MaOUQ%2B6XK1%2BlWgQyKWpptuiqMO8r6epQWjxu8QEcXGTIG6M4NizwaOaGzNO0gf6xbrm9fOcdgr7UY5bIPYvKaYrHebVDLjPE1DWg%3D%3D">
-</head>
+    <meta name="twitter:title" content="Up &amp; Down Solar — Fleet Management">
+    <meta property="og:description" content="Heavy machinery fleet management system. Powered by God.">
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('SW registered: ', registration);
-            })
-            .catch(registrationError => {
-              console.log('SW registration failed: ', registrationError);
-            });
+            .then(registration => { console.log('SW registered: ', registration); })
+            .catch(registrationError => { console.log('SW registration failed: ', registrationError); });
         });
       }
     </script>

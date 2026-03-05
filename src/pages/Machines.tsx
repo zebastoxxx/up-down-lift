@@ -250,32 +250,24 @@ export default function Machines() {
   ];
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
+    <div className="p-6 space-y-4 max-w-7xl mx-auto">
       <Tabs defaultValue="machines" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="machines">Máquinas</TabsTrigger>
           <TabsTrigger value="history">Historial Preoperacional</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="machines" className="space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Gestión de Máquinas</h1>
-              <p className="text-muted-foreground">
-                Administra tu flota de maquinaria y equipos
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Exportar
-              </Button>
-              <Button onClick={() => setIsFormOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nueva Máquina
-              </Button>
-            </div>
+        <TabsContent value="machines" className="space-y-4">
+          {/* Action bar */}
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-1.5" />
+              Exportar
+            </Button>
+            <Button size="sm" onClick={() => setIsFormOpen(true)}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Nueva Máquina
+            </Button>
           </div>
 
           {/* Search */}

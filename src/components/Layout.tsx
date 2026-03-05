@@ -5,7 +5,18 @@ import { PWAInstallBanner } from "@/components/ui/pwa-install-banner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LogOut } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { RoleBadge } from "@/components/ui/role-badge";
+import { useLocation } from "react-router-dom";
+
+const routeNames: Record<string, string> = {
+  "/": "Preoperacionales",
+  "/preoperational": "Preoperacionales",
+  "/warehouse-inspection": "Bodega",
+  "/machines": "Equipos",
+  "/clients": "Clientes",
+  "/projects": "Proyectos",
+  "/settings": "Configuración",
+};
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,30 +25,26 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { signOut, user } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const moduleName = routeNames[location.pathname] || "";
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Slim header — 52px */}
-          <header className={cn(
-            "h-[52px] border-b border-border flex items-center justify-between px-4 sticky top-0 z-40 bg-card",
-          )}>
+          {/* Header — 48px */}
+          <header className="h-12 border-b border-border flex items-center justify-between px-4 sticky top-0 z-40 bg-card">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="-ml-1" />
               {!isMobile && (
-                <span className="text-sm font-bold text-foreground font-condensed tracking-wide uppercase">
-                  UpDown Solar OS
+                <span className="text-sm font-semibold text-foreground tracking-wide">
+                  {moduleName}
                 </span>
               )}
             </div>
             <div className="flex items-center gap-2">
-              {!isMobile && user && (
-                <span className="text-xs font-medium text-muted-foreground font-condensed uppercase tracking-wide">
-                  {user.role}
-                </span>
-              )}
+              {!isMobile && user && <RoleBadge role={user.role} />}
               {!isMobile && (
                 <span className="text-xs text-muted-foreground">
                   {user?.full_name || user?.username}

@@ -14,9 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["DM Sans", "sans-serif"],
-        display: ["Barlow Condensed", "sans-serif"],
-        condensed: ["Barlow Condensed", "sans-serif"],
+        sans: ["Instrument Sans", "sans-serif"],
+        display: ["Playfair Display", "serif"],
       },
       screens: {
         'touch': { 'raw': '(hover: none)' },
@@ -55,6 +54,11 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
           bg: "hsl(var(--warning-bg))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+          bg: "hsl(var(--info-bg))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -100,8 +104,6 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        xl: "0.875rem",
-        "2xl": "1rem",
       },
       keyframes: {
         "accordion-down": {
