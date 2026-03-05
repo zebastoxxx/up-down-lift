@@ -99,21 +99,21 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[hsl(37,18%,94%)] p-4">
-      <Card className="w-full max-w-sm rounded-2xl shadow-elevated border-border">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <Card className="w-full max-w-sm shadow-elevated">
         <CardHeader className="text-center pb-2 pt-8">
-          <img src={logo} alt="Up & Down Solar" className="h-20 w-20 mx-auto mb-4 object-contain" />
-          <h1 className="text-2xl font-bold font-condensed uppercase tracking-wide text-primary">
+          <img src={logo} alt="Up & Down Solar" className="h-16 w-16 mx-auto mb-3 object-contain" />
+          <h1 className="text-2xl font-bold font-display text-primary">
             Up & Down Solar
           </h1>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mt-1">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mt-1">
             Powered by God
           </p>
         </CardHeader>
         <CardContent className="px-6 pb-8">
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="username" className="text-xs font-medium uppercase tracking-wide">Usuario</Label>
+              <Label htmlFor="username" className="text-xs font-medium">Usuario</Label>
               <Input
                 id="username"
                 name="username"
@@ -121,13 +121,13 @@ export default function Auth() {
                 placeholder="Ingresa tu usuario"
                 value={formData.username}
                 onChange={handleInputChange}
-                className={`h-11 rounded-lg ${errors.username ? 'border-destructive' : ''}`}
+                className={`h-10 ${errors.username ? 'border-destructive' : ''}`}
               />
               {errors.username && <p className="text-xs text-destructive">{errors.username}</p>}
             </div>
             
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-medium uppercase tracking-wide">Contraseña</Label>
+              <Label htmlFor="password" className="text-xs font-medium">Contraseña</Label>
               <Input
                 id="password"
                 name="password"
@@ -135,14 +135,14 @@ export default function Auth() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={`h-11 rounded-lg ${errors.password ? 'border-destructive' : ''}`}
+                className={`h-10 ${errors.password ? 'border-destructive' : ''}`}
               />
               {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
             
             <Button 
               type="submit" 
-              className="w-full h-11 rounded-lg font-condensed uppercase tracking-wide text-sm font-bold" 
+              className="w-full h-10 text-sm font-semibold" 
               disabled={isSubmitting}
             >
               {isSubmitting ? (

@@ -257,7 +257,7 @@ export default function WarehouseInspection() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
+    <div className="p-6 space-y-4 max-w-6xl mx-auto">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="new">Nueva Inspección</TabsTrigger>

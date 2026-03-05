@@ -249,28 +249,18 @@ export default function Clients() {
   ];
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl mobile-scroll overflow-x-hidden">
+    <div className="p-6 space-y-4 max-w-7xl mx-auto overflow-x-hidden">
       <div className="w-full min-w-0">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="min-w-0 flex-1">
-            <h1 className="text-2xl sm:text-3xl font-bold truncate">Gestión de Clientes</h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
-              Administra tu cartera de clientes y proyectos
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto">
-              <Download className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Exportar</span>
-              <span className="sm:hidden">Export</span>
-            </Button>
-            <Button onClick={() => setIsFormOpen(true)} className="w-full sm:w-auto">
-              <Plus className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Nuevo Cliente</span>
-              <span className="sm:hidden">Nuevo</span>
-            </Button>
-          </div>
+        {/* Action bar */}
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-1.5" />
+            Exportar
+          </Button>
+          <Button size="sm" onClick={() => setIsFormOpen(true)}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Nuevo Cliente
+          </Button>
         </div>
 
         {/* Search */}

@@ -3,10 +3,10 @@ import { cn } from "@/lib/utils";
 type EquipmentStatus = "activo" | "en_mantenimiento" | "disponible" | "fuera_servicio";
 
 const statusConfig: Record<EquipmentStatus, { label: string; dotClass: string; bgClass: string }> = {
-  activo: { label: "Operativo", dotClass: "bg-[hsl(140,45%,38%)]", bgClass: "bg-[hsl(140,40%,93%)] text-[hsl(140,45%,28%)]" },
-  en_mantenimiento: { label: "Mantenimiento", dotClass: "bg-[hsl(33,78%,47%)]", bgClass: "bg-[hsl(37,60%,94%)] text-[hsl(33,78%,35%)]" },
+  activo: { label: "Operativo", dotClass: "bg-status-active", bgClass: "bg-success-bg text-[hsl(122,39%,25%)]" },
+  en_mantenimiento: { label: "Mantenimiento", dotClass: "bg-status-maintenance", bgClass: "bg-warning-bg text-[hsl(28,91%,30%)]" },
   disponible: { label: "Disponible", dotClass: "bg-status-available", bgClass: "bg-primary-light text-primary" },
-  fuera_servicio: { label: "Fuera de Servicio", dotClass: "bg-[hsl(4,70%,46%)]", bgClass: "bg-[hsl(4,70%,96%)] text-[hsl(4,70%,40%)]" },
+  fuera_servicio: { label: "Fuera de Servicio", dotClass: "bg-status-offline", bgClass: "bg-danger-bg text-[hsl(0,72%,30%)]" },
 };
 
 interface StatusBadgeProps {

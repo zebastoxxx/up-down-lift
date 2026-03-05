@@ -336,14 +336,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-6xl mobile-scroll overflow-x-hidden">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Configuración</h1>
-        <p className="text-muted-foreground">
-          Gestiona usuarios, roles y configuración del sistema
-        </p>
-      </div>
+    <div className="p-6 space-y-4 max-w-6xl mx-auto overflow-x-hidden">
 
       <Tabs defaultValue="users" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto sm:max-w-none">
