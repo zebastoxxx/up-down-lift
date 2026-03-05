@@ -4,16 +4,12 @@ import {
   FolderOpen,
   ClipboardCheck,
   Settings,
-  BarChart3,
   PackageCheck,
-  Wrench,
-  DollarSign,
-  HardHat,
-  LayoutDashboard,
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import logo from "@/assets/logo.png";
 
 import {
   Sidebar,
@@ -27,24 +23,19 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
-  const { user, hasPermission } = useAuth();
-  const location = useLocation();
+  const { hasPermission } = useAuth();
 
   const getNavClasses = ({ isActive }: { isActive: boolean }) =>
     cn(
-      "text-sm",
+      "text-sm font-condensed tracking-wide transition-colors rounded-lg",
       isActive
-        ? "bg-primary text-primary-foreground font-medium"
-        : "hover:bg-muted text-sidebar-foreground"
+        ? "text-sidebar-primary font-semibold border-l-2 border-sidebar-primary bg-sidebar-primary/10"
+        : "text-sidebar-foreground hover:text-sidebar-primary-foreground hover:bg-sidebar-primary/5"
     );
 
   const getNavigationItems = () => {
     const items = [];
-
-    // Preoperational — all users
     items.push({ title: "Preoperacional", url: "/", icon: ClipboardCheck });
-
-    // Supervisor + Admin items
     if (hasPermission("supervisor")) {
       items.push(
         { title: "Bodega", url: "/warehouse-inspection", icon: PackageCheck },
@@ -53,7 +44,6 @@ export function AppSidebar() {
         { title: "Proyectos", url: "/projects", icon: FolderOpen }
       );
     }
-
     return items;
   };
 
@@ -70,9 +60,22 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="bg-card border-r-0">
+      <SidebarContent className="bg-sidebar border-r-0">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-sidebar-border">
+          <img src={logo} alt="Up & Down Solar" className="h-8 w-8 object-contain" />
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <span className="text-sm font-bold text-sidebar-primary font-condensed tracking-wide uppercase">
+              UpDown Solar
+            </span>
+            <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest">
+              Powered by God
+            </span>
+          </div>
+        </div>
+
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans">
+          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-foreground/40 font-condensed px-4">
             Menú
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -82,7 +85,7 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink to={item.url} end className={getNavClasses}>
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span className="font-condensed">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -93,7 +96,7 @@ export function AppSidebar() {
 
         {quickActions.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground font-sans">
+            <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-[0.15em] text-sidebar-foreground/40 font-condensed px-4">
               Sistema
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -103,7 +106,7 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink to={item.url} className={getNavClasses}>
                         <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <span className="font-condensed">{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

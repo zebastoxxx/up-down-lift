@@ -5,7 +5,6 @@ import { PWAInstallBanner } from "@/components/ui/pwa-install-banner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LogOut } from "lucide-react";
-import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -21,21 +20,24 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Header — compact */}
+          {/* Slim header — 52px */}
           <header className={cn(
-            "h-12 border-b border-border flex items-center justify-between px-3 sticky top-0 z-40 bg-card",
-            isMobile && "h-11"
+            "h-[52px] border-b border-border flex items-center justify-between px-4 sticky top-0 z-40 bg-card",
           )}>
             <div className="flex items-center gap-3">
               <SidebarTrigger className="-ml-1" />
-              <div className="flex items-center gap-2">
-                <img src={logo} alt="UpDown Solar" className="h-6 w-6 object-contain" />
-                {!isMobile && (
-                  <span className="text-sm font-semibold text-foreground font-sans">UpDown Solar OS</span>
-                )}
-              </div>
+              {!isMobile && (
+                <span className="text-sm font-bold text-foreground font-condensed tracking-wide uppercase">
+                  UpDown Solar OS
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
+              {!isMobile && user && (
+                <span className="text-xs font-medium text-muted-foreground font-condensed uppercase tracking-wide">
+                  {user.role}
+                </span>
+              )}
               {!isMobile && (
                 <span className="text-xs text-muted-foreground">
                   {user?.full_name || user?.username}

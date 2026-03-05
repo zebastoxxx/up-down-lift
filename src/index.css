@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    /* UpDown Solar OS — Green Brand Palette */
-    --background: 40 18% 96%;
+    /* Up & Down Solar — Gold & Charcoal Industrial Palette */
+    --background: 37 18% 94%;
     --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
@@ -16,90 +16,90 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
 
-    /* Primary Green */
-    --primary: 150 55% 24%;
-    --primary-mid: 150 48% 32%;
-    --primary-light: 147 47% 93%;
+    /* Primary Gold */
+    --primary: 33 78% 47%;
+    --primary-mid: 33 70% 54%;
+    --primary-light: 37 60% 94%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 40 18% 94%;
+    --secondary: 37 14% 91%;
     --secondary-foreground: 0 0% 10%;
 
-    --muted: 40 18% 94%;
-    --muted-foreground: 0 0% 33%;
+    --muted: 37 14% 91%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 150 55% 24%;
+    --accent: 33 78% 47%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 4 70% 46%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 132 40% 40%;
+    --success: 140 45% 38%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 30 68% 46%;
+    --warning: 33 78% 47%;
     --warning-foreground: 0 0% 0%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 150 55% 24%;
+    --border: 35 12% 86%;
+    --input: 35 12% 86%;
+    --ring: 33 78% 47%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
     /* Equipment Status Colors */
-    --status-active: 132 40% 40%;
-    --status-maintenance: 30 68% 46%;
+    --status-active: 140 45% 38%;
+    --status-maintenance: 33 78% 47%;
     --status-available: 220 60% 55%;
     --status-offline: 4 70% 46%;
 
-    /* Danger background */
+    /* Semantic backgrounds */
     --danger-bg: 4 70% 96%;
-    --success-bg: 132 40% 93%;
-    --warning-bg: 30 68% 95%;
+    --success-bg: 140 40% 93%;
+    --warning-bg: 37 60% 94%;
 
     /* Shadows */
-    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.06);
-    --shadow-elevated: 0 4px 12px -2px hsl(0 0% 0% / 0.1);
+    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.05);
+    --shadow-elevated: 0 4px 16px -4px hsl(0 0% 0% / 0.1);
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 20%;
-    --sidebar-primary: 150 55% 24%;
+    /* Sidebar — dark charcoal */
+    --sidebar-background: 0 0% 11%;
+    --sidebar-foreground: 0 0% 65%;
+    --sidebar-primary: 33 78% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 150 55% 24%;
+    --sidebar-accent: 33 78% 47%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 150 55% 24%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 33 78% 47%;
   }
 
   .dark {
     --background: 0 0% 7%;
-    --foreground: 0 0% 95%;
+    --foreground: 0 0% 92%;
     --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
+    --card-foreground: 0 0% 92%;
     --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 150 55% 30%;
+    --popover-foreground: 0 0% 92%;
+    --primary: 33 78% 47%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
+    --secondary-foreground: 0 0% 92%;
     --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 60%;
-    --accent: 150 55% 30%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 33 78% 47%;
     --accent-foreground: 0 0% 100%;
     --destructive: 4 70% 40%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 150 55% 30%;
-    --sidebar-background: 0 0% 8%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 150 55% 30%;
+    --ring: 33 78% 47%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 60%;
+    --sidebar-primary: 33 78% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 15%;
     --sidebar-accent-foreground: 0 0% 90%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 150 55% 30%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-ring: 33 78% 47%;
   }
 }
 
@@ -110,10 +110,11 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Instrument Sans', sans-serif;
+    font-family: 'DM Sans', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
   }
 }

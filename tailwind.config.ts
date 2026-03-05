@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Instrument Sans", "sans-serif"],
-        serif: ["Playfair Display", "serif"],
-        display: ["Playfair Display", "serif"],
+        sans: ["DM Sans", "sans-serif"],
+        display: ["Barlow Condensed", "sans-serif"],
+        condensed: ["Barlow Condensed", "sans-serif"],
       },
       screens: {
         'touch': { 'raw': '(hover: none)' },
@@ -100,6 +100,8 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "0.875rem",
+        "2xl": "1rem",
       },
       keyframes: {
         "accordion-down": {

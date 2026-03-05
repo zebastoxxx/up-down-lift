@@ -3,13 +3,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { z } from 'zod';
+import logo from '@/assets/logo.png';
 
-// Validation schema
 const authSchema = z.object({
   username: z.string().min(3, 'El usuario debe tener al menos 3 caracteres'),
   password: z.string().min(3, 'La contraseña debe tener al menos 3 caracteres'),
@@ -20,16 +20,11 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ username: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (user && !authLoading) {
-      // Redirect based on user role
       if (user.role === "operario") {
         navigate("/preoperational", { replace: true });
       } else {
@@ -70,20 +65,10 @@ export default function Auth() {
 
     try {
       const result = await signIn(formData.username, formData.password);
-      
       if (result?.error) {
-        toast({
-          title: "Error de autenticación",
-          description: result.error || "Credenciales inválidas",
-          variant: "destructive",
-        });
+        toast({ title: "Error de autenticación", description: result.error || "Credenciales inválidas", variant: "destructive" });
       } else {
-        toast({
-          title: "¡Bienvenido!",
-          description: "Has iniciado sesión correctamente",
-        });
-        
-        // Redirect based on user role after successful login
+        toast({ title: "¡Bienvenido!", description: "Has iniciado sesión correctamente" });
         if (result?.user?.role === "operario") {
           navigate("/preoperational", { replace: true });
         } else {
@@ -91,11 +76,7 @@ export default function Auth() {
         }
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Ha ocurrido un error inesperado",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Ha ocurrido un error inesperado", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -104,8 +85,6 @@ export default function Auth() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -113,25 +92,28 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Maquinaria y Construcción</CardTitle>
-          <CardDescription>
-            Sistema de gestión de maquinaria pesada
-          </CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-[hsl(37,18%,94%)] p-4">
+      <Card className="w-full max-w-sm rounded-2xl shadow-elevated border-border">
+        <CardHeader className="text-center pb-2 pt-8">
+          <img src={logo} alt="Up & Down Solar" className="h-20 w-20 mx-auto mb-4 object-contain" />
+          <h1 className="text-2xl font-bold font-condensed uppercase tracking-wide text-primary">
+            Up & Down Solar
+          </h1>
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground mt-1">
+            Powered by God
+          </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6 pb-8">
           <form onSubmit={handleSignIn} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Usuario</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="username" className="text-xs font-medium uppercase tracking-wide">Usuario</Label>
               <Input
                 id="username"
                 name="username"
@@ -139,15 +121,13 @@ export default function Auth() {
                 placeholder="Ingresa tu usuario"
                 value={formData.username}
                 onChange={handleInputChange}
-                className={errors.username ? 'border-destructive' : ''}
+                className={`h-11 rounded-lg ${errors.username ? 'border-destructive' : ''}`}
               />
-              {errors.username && (
-                <p className="text-sm text-destructive">{errors.username}</p>
-              )}
+              {errors.username && <p className="text-xs text-destructive">{errors.username}</p>}
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-xs font-medium uppercase tracking-wide">Contraseña</Label>
               <Input
                 id="password"
                 name="password"
@@ -155,16 +135,14 @@ export default function Auth() {
                 placeholder="••••••••"
                 value={formData.password}
                 onChange={handleInputChange}
-                className={errors.password ? 'border-destructive' : ''}
+                className={`h-11 rounded-lg ${errors.password ? 'border-destructive' : ''}`}
               />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
+              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
             
             <Button 
               type="submit" 
-              className="w-full" 
+              className="w-full h-11 rounded-lg font-condensed uppercase tracking-wide text-sm font-bold" 
               disabled={isSubmitting}
             >
               {isSubmitting ? (
@@ -176,11 +154,6 @@ export default function Auth() {
                 'Iniciar Sesión'
               )}
             </Button>
-            
-            <div className="text-center text-sm text-muted-foreground mt-4">
-              <p>Usuario: admin</p>
-              <p>Contraseña: admin123</p>
-            </div>
           </form>
         </CardContent>
       </Card>
