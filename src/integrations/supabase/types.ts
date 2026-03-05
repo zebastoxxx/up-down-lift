@@ -27,6 +27,7 @@ export type Database = {
           phone: string | null
           status: string
           tax_id: string | null
+          updated_at: string
           website: string | null
         }
         Insert: {
@@ -41,6 +42,7 @@ export type Database = {
           phone?: string | null
           status?: string
           tax_id?: string | null
+          updated_at?: string
           website?: string | null
         }
         Update: {
@@ -55,6 +57,7 @@ export type Database = {
           phone?: string | null
           status?: string
           tax_id?: string | null
+          updated_at?: string
           website?: string | null
         }
         Relationships: []
@@ -66,15 +69,14 @@ export type Database = {
           current_hours: number | null
           id: string
           last_corrective_maintenance_date: string | null
-          last_preop_date: string | null
           last_preventive_maintenance_date: string | null
           location: string | null
           model: string | null
           name: string
           next_certification_date: string | null
-          next_preventive_hours: number | null
           serial_number: string | null
           status: string
+          updated_at: string
         }
         Insert: {
           brand?: string | null
@@ -82,15 +84,14 @@ export type Database = {
           current_hours?: number | null
           id?: string
           last_corrective_maintenance_date?: string | null
-          last_preop_date?: string | null
           last_preventive_maintenance_date?: string | null
           location?: string | null
           model?: string | null
           name: string
           next_certification_date?: string | null
-          next_preventive_hours?: number | null
           serial_number?: string | null
           status?: string
+          updated_at?: string
         }
         Update: {
           brand?: string | null
@@ -98,15 +99,14 @@ export type Database = {
           current_hours?: number | null
           id?: string
           last_corrective_maintenance_date?: string | null
-          last_preop_date?: string | null
           last_preventive_maintenance_date?: string | null
           location?: string | null
           model?: string | null
           name?: string
           next_certification_date?: string | null
-          next_preventive_hours?: number | null
           serial_number?: string | null
           status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -146,8 +146,8 @@ export type Database = {
           tires_bearing_issue: boolean | null
           tires_punctured: boolean | null
           tires_wear: string | null
-          user_id: string | null
-          username: string | null
+          updated_at: string
+          username: string
         }
         Insert: {
           checklist?: Json | null
@@ -184,8 +184,8 @@ export type Database = {
           tires_bearing_issue?: boolean | null
           tires_punctured?: boolean | null
           tires_wear?: string | null
-          user_id?: string | null
-          username?: string | null
+          updated_at?: string
+          username: string
         }
         Update: {
           checklist?: Json | null
@@ -222,8 +222,8 @@ export type Database = {
           tires_bearing_issue?: boolean | null
           tires_punctured?: boolean | null
           tires_wear?: string | null
-          user_id?: string | null
-          username?: string | null
+          updated_at?: string
+          username?: string
         }
         Relationships: [
           {
@@ -363,6 +363,7 @@ export type Database = {
           name: string
           start_date: string | null
           status: string
+          updated_at: string
         }
         Insert: {
           address?: string | null
@@ -377,6 +378,7 @@ export type Database = {
           name: string
           start_date?: string | null
           status?: string
+          updated_at?: string
         }
         Update: {
           address?: string | null
@@ -391,6 +393,7 @@ export type Database = {
           name?: string
           start_date?: string | null
           status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -398,7 +401,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          preferences: Json
+          preferences: Json | null
           table_name: string
           updated_at: string
           user_id: string
@@ -406,7 +409,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          preferences?: Json
+          preferences?: Json | null
           table_name: string
           updated_at?: string
           user_id: string
@@ -414,7 +417,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          preferences?: Json
+          preferences?: Json | null
           table_name?: string
           updated_at?: string
           user_id?: string
@@ -430,6 +433,7 @@ export type Database = {
           password_hash: string
           role: string
           status: string
+          updated_at: string
           username: string
         }
         Insert: {
@@ -440,6 +444,7 @@ export type Database = {
           password_hash: string
           role?: string
           status?: string
+          updated_at?: string
           username: string
         }
         Update: {
@@ -450,6 +455,7 @@ export type Database = {
           password_hash?: string
           role?: string
           status?: string
+          updated_at?: string
           username?: string
         }
         Relationships: []
@@ -497,7 +503,6 @@ export type Database = {
           checklist: Json | null
           coolant_level: string | null
           created_at: string
-          datetime: string
           documents_complete: boolean | null
           documents_missing: string | null
           fire_extinguisher: boolean | null
@@ -526,8 +531,9 @@ export type Database = {
           tire_pressure_ok: boolean | null
           tools_complete: boolean | null
           tools_missing: string | null
-          user_id: string | null
-          username: string | null
+          updated_at: string
+          user_id: string
+          username: string
           windows_intact: boolean | null
           windows_note: string | null
         }
@@ -538,7 +544,6 @@ export type Database = {
           checklist?: Json | null
           coolant_level?: string | null
           created_at?: string
-          datetime?: string
           documents_complete?: boolean | null
           documents_missing?: string | null
           fire_extinguisher?: boolean | null
@@ -567,8 +572,9 @@ export type Database = {
           tire_pressure_ok?: boolean | null
           tools_complete?: boolean | null
           tools_missing?: string | null
-          user_id?: string | null
-          username?: string | null
+          updated_at?: string
+          user_id: string
+          username: string
           windows_intact?: boolean | null
           windows_note?: string | null
         }
@@ -579,7 +585,6 @@ export type Database = {
           checklist?: Json | null
           coolant_level?: string | null
           created_at?: string
-          datetime?: string
           documents_complete?: boolean | null
           documents_missing?: string | null
           fire_extinguisher?: boolean | null
@@ -608,8 +613,9 @@ export type Database = {
           tire_pressure_ok?: boolean | null
           tools_complete?: boolean | null
           tools_missing?: string | null
-          user_id?: string | null
-          username?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string
           windows_intact?: boolean | null
           windows_note?: string | null
         }
