@@ -496,33 +496,20 @@ export default function Preoperational() {
   };
 
   const renderHeader = () => (
-    <div className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-lg font-semibold">Preoperacional</h1>
-          <p className="text-sm text-muted-foreground">
-            {selectedProject && selectedMachine 
-              ? `${selectedProject.name} - ${selectedMachine.name}`
-              : "Formulario diario de inspección"
-            }
-          </p>
-          {user && (
-            <p className="text-xs text-muted-foreground mt-1">
-              👤 Operador: {user.full_name || user.username}
-            </p>
-          )}
-        </div>
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        {selectedProject && selectedMachine && (
+          <span>{selectedProject.name} — {selectedMachine.name}</span>
+        )}
+        {user && <span>· {user.full_name || user.username}</span>}
       </div>
       <div className="flex items-center gap-2">
         {!isOnline && (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+          <Badge variant="secondary" className="bg-warning-bg text-warning text-xs">
             Sin conexión
           </Badge>
         )}
-        <Badge variant="outline">
+        <Badge variant="outline" className="text-xs">
           Paso {currentStep} de 3
         </Badge>
       </div>
@@ -836,35 +823,21 @@ export default function Preoperational() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6 max-w-7xl">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Preoperacional</h1>
-        <p className="text-muted-foreground">
-          Realiza inspecciones preoperacionales y consulta el historial
-          </p>
-          {user && (
-            <p className="text-xs text-muted-foreground mt-1">
-              👤 Operador: {user.full_name || user.username}
-            </p>
-          )}
-        </div>
-
-      <Tabs defaultValue="form" className="space-y-6">
+    <div className="p-4 space-y-4 max-w-7xl mx-auto">
+      <Tabs defaultValue="form" className="space-y-4">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="form">Nueva Inspección</TabsTrigger>
           <TabsTrigger value="history">Historial</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="form" className="space-y-6">
-          <div className="min-h-screen bg-background">
-            {renderHeader()}
-            <div className="max-w-2xl mx-auto px-0 md:px-4">
-              {renderStepContent()}
-            </div>
+        <TabsContent value="form" className="space-y-4">
+          {renderHeader()}
+          <div className="max-w-2xl mx-auto">
+            {renderStepContent()}
           </div>
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-6">
+        <TabsContent value="history" className="space-y-4">
           <PreoperationalHistory />
         </TabsContent>
       </Tabs>

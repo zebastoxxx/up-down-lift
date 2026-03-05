@@ -250,7 +250,7 @@ export default function Machines() {
   ];
 
   return (
-    <div className="p-6 space-y-4 max-w-7xl mx-auto">
+    <div className="p-4 space-y-4 max-w-7xl mx-auto">
       <Tabs defaultValue="machines" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="machines">Máquinas</TabsTrigger>
